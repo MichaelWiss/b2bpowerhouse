@@ -60,6 +60,7 @@ export async function handleOrderCreated(payload: ShopifyOrderPayload) {
     const salesOrder = await createSalesOrder({
       customerEmail: payload.email,
       items: mappedItems,
+      shopifyOrderId: String(payload.id),
     });
 
     await prisma.syncEvent.update({

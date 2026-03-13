@@ -397,6 +397,83 @@ ERPNext stock changes (Stock Entry, Purchase Receipt, etc.)
 - Shows: stock level, lead time, warehouse location
 - Graceful fallback if ERPNext is unreachable (show "Contact for availability")
 
+### Step 12: Fulfillment Sync — ERPNext → Shopify *(depends on Steps 9, 10)*
+
+**Cost: $0 — uses ERPNext native Delivery Notes + Shopify fulfillmentCreateV2 API**
+
+**Architecture:**
+- ERPNext is the source of truth for fulfillment (warehouse picks, packs, ships)
+- Delivery Note submission in ERPNext triggers a webhook to our app
+- Our app creates a Shopify fulfillment (with tracking number + carrier)
+- Shopify automatically sends the buyer a "Your order has shipped" email
+- Supports partial fulfillment (multiple Delivery Notes per Sales Order)
+
+**Flow:**
+```
+Warehouse submits Delivery Note in ERPNext (with tracking + carrier)
+  → ERPNext Server Script on Delivery Note on_submit fires
+  → POST to /api/webhooks/erpnext/fulfillment-update
+  → Verify shared secret (ERPNEXT_WEBHOOK_SECRET)
+  → Idempotency check (one fulfillment per Delivery Note name)
+  → Enqueue "fulfillment-update" job (pg-boss)
+  → pg-boss worker picks up job:
+      ├─ Fetch full Delivery Note from ERPNext API
+      ├─ Look up Shopify order GID via SyncEvent (from order creation)
+      ├─ Get Shopify fulfillment orders for this order
+      ├─ Match Delivery Note items → Shopify line items by SKU
+      ├─ Call fulfillmentCreateV2 with tracking info
+      ├─ Save FulfillmentSync record (erpDeliveryNote ↔ shopifyFulfillment)
+      └─ Log to SyncEvent
+```
+
+**Key files:**
+- `lib/erp/types.ts` — `ErpDeliveryNote`, `ErpDeliveryNoteItem` types
+- `lib/erp/erpnext.ts` — `getDeliveryNote()`, `getDeliveryNotes()` functions
+- `lib/shopify/admin.ts` — `getFulfillmentOrders()`, `createFulfillment()` functions
+- `lib/webhooks/handlers/fulfillment-update.ts` — business logic
+- `app/api/webhooks/erpnext/fulfillment-update/route.ts` — webhook endpoint
+
+**Database:**
+- `FulfillmentSync` Prisma model — maps ERPNext Delivery Note ↔ Shopify Fulfillment
+- Indexed on `shopifyOrderId` and `erpSalesOrderName` for fast lookups
+- Prevents duplicate fulfillments via unique `erpDeliveryNoteName`
+
+**ERPNext Setup Required:**
+1. Add custom fields to Sales Order: `custom_shopify_order_id` (Data)
+2. Add custom fields to Delivery Note: `custom_tracking_number` (Data), `custom_carrier` (Data), `custom_shopify_order_id` (Data)
+3. Create Server Script on Delivery Note `on_submit`:
+```python
+import requests, json, frappe
+
+doc = frappe.get_doc("Delivery Note", frappe.flags.current_doc_name)
+sales_order = doc.items[0].against_sales_order if doc.items else None
+
+payload = {
+    "delivery_note": doc.name,
+    "sales_order": sales_order,
+    "tracking_number": doc.custom_tracking_number,
+    "carrier": doc.custom_carrier
+}
+
+requests.post(
+    "https://yourdomain.com/api/webhooks/erpnext/fulfillment-update",
+    json=payload,
+    headers={"Authorization": f"Bearer {frappe.conf.webhook_secret}"},
+    timeout=10
+)
+```
+
+**Partial Fulfillment:**
+- A Sales Order with 100 units can ship as 3 Delivery Notes (40 + 40 + 20)
+- Each DN creates a separate Shopify fulfillment
+- Shopify tracks remaining unfulfilled quantities automatically
+- Buyer receives a shipping notification for each shipment
+
+**Edge cases:**
+- DN with no matching SKU mappings → error logged, pg-boss retries
+- Shopify order already fully fulfilled → Shopify returns error, logged
+- Tracking number added after DN submission → manual re-trigger or update
+
 ---
 
 ## Phase 3: AI Features
@@ -549,6 +626,11 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - [ ] Check `SyncEvent` table — all syncs logged with status
 - [ ] Send duplicate webhook → caught by idempotency check
 - [ ] Kill ERPNext → webhook job queued, retried when ERPNext recovers
+- [ ] Submit Delivery Note in ERPNext → Shopify fulfillment created
+- [ ] Buyer receives "Your order has shipped" email from Shopify
+- [ ] Partial fulfillment: ship 40 of 100 units → only those items fulfilled
+- [ ] Duplicate Delivery Note webhook → caught by idempotency check
+- [ ] Check `FulfillmentSync` table — DN ↔ Shopify fulfillment mapped
 
 ### Phase 3 ✓
 - [ ] Open AI chat → "reorder my usual Q2 items"

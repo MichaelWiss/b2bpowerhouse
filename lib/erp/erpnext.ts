@@ -2,7 +2,7 @@
 // ERPNext REST API client — typed, safe (no string interpolation in filters)
 // ---------------------------------------------------------------------------
 
-import type { ErpStockLevel, ErpSalesOrder } from "./types";
+import type { ErpStockLevel, ErpSalesOrder, ErpDeliveryNote } from "./types";
 
 const ERP_BASE = process.env.ERPNEXT_URL;
 const ERP_KEY = process.env.ERPNEXT_API_KEY;
@@ -45,6 +45,7 @@ export async function getStockLevel(itemCode: string): Promise<ErpStockLevel | n
 export async function createSalesOrder(order: {
   customerEmail: string;
   items: { itemCode: string; qty: number; rate: number }[];
+  shopifyOrderId?: string;
 }): Promise<ErpSalesOrder> {
   const deliveryDate = new Date(Date.now() + 7 * 86_400_000)
     .toISOString()
@@ -55,6 +56,7 @@ export async function createSalesOrder(order: {
     body: JSON.stringify({
       customer: order.customerEmail,
       delivery_date: deliveryDate,
+      ...(order.shopifyOrderId && { custom_shopify_order_id: order.shopifyOrderId }),
       items: order.items.map((item) => ({
         item_code: item.itemCode,
         qty: item.qty,
@@ -76,5 +78,26 @@ export async function getOrderHistory(customerId: string): Promise<ErpSalesOrder
   });
 
   const data = await erpFetch<{ data: ErpSalesOrder[] }>(`Sales Order?${params}`);
+  return data.data;
+}
+
+// Get Delivery Notes for a Sales Order (supports partial fulfillment)
+export async function getDeliveryNotes(salesOrderName: string): Promise<ErpDeliveryNote[]> {
+  const params = new URLSearchParams({
+    filters: JSON.stringify([["items.against_sales_order", "=", salesOrderName]]),
+    fields: JSON.stringify([
+      "name", "customer", "status", "docstatus", "posting_date",
+      "custom_tracking_number", "custom_carrier", "custom_shopify_order_id",
+    ]),
+    order_by: "posting_date desc",
+  });
+
+  const data = await erpFetch<{ data: ErpDeliveryNote[] }>(`Delivery Note?${params}`);
+  return data.data;
+}
+
+// Get a single Delivery Note with its line items
+export async function getDeliveryNote(name: string): Promise<ErpDeliveryNote> {
+  const data = await erpFetch<{ data: ErpDeliveryNote }>(`Delivery Note/${encodeURIComponent(name)}`);
   return data.data;
 }

@@ -57,3 +57,122 @@ export async function setInventoryQuantity(
     },
   });
 }
+
+// ---------------------------------------------------------------------------
+// Fulfillment — create a fulfillment on a Shopify order with tracking info
+// ---------------------------------------------------------------------------
+
+interface FulfillmentLineItem {
+  id: string;       // Shopify fulfillment order line item ID
+  quantity: number;
+}
+
+interface CreateFulfillmentResult {
+  fulfillmentCreateV2: {
+    fulfillment: { id: string; status: string } | null;
+    userErrors: { field: string[]; message: string }[];
+  };
+}
+
+// Get the fulfillment order(s) for a Shopify order — needed before creating fulfillments
+export async function getFulfillmentOrders(orderId: string) {
+  const query = `
+    query getFulfillmentOrders($orderId: ID!) {
+      order(id: $orderId) {
+        fulfillmentOrders(first: 10) {
+          edges {
+            node {
+              id
+              status
+              lineItems(first: 50) {
+                edges {
+                  node {
+                    id
+                    remainingQuantity
+                    lineItem {
+                      sku
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  return shopifyAdminFetch<{
+    order: {
+      fulfillmentOrders: {
+        edges: {
+          node: {
+            id: string;
+            status: string;
+            lineItems: {
+              edges: {
+                node: {
+                  id: string;
+                  remainingQuantity: number;
+                  lineItem: { sku: string | null };
+                };
+              }[];
+            };
+          };
+        }[];
+      };
+    };
+  }>(query, { orderId });
+}
+
+// Create a fulfillment with optional tracking info
+export async function createFulfillment(
+  fulfillmentOrderId: string,
+  lineItems: FulfillmentLineItem[],
+  trackingInfo?: { number: string; company: string; url?: string },
+) {
+  const mutation = `
+    mutation fulfillmentCreateV2($fulfillment: FulfillmentV2Input!) {
+      fulfillmentCreateV2(fulfillment: $fulfillment) {
+        fulfillment {
+          id
+          status
+        }
+        userErrors { field message }
+      }
+    }
+  `;
+
+  const fulfillment: Record<string, unknown> = {
+    lineItemsByFulfillmentOrder: [
+      {
+        fulfillmentOrderId,
+        fulfillmentOrderLineItems: lineItems.map((li) => ({
+          id: li.id,
+          quantity: li.quantity,
+        })),
+      },
+    ],
+    notifyCustomer: true,
+  };
+
+  if (trackingInfo) {
+    fulfillment.trackingInfo = {
+      number: trackingInfo.number,
+      company: trackingInfo.company,
+      ...(trackingInfo.url && { url: trackingInfo.url }),
+    };
+  }
+
+  const result = await shopifyAdminFetch<CreateFulfillmentResult>(mutation, {
+    fulfillment,
+  });
+
+  if (result.fulfillmentCreateV2.userErrors.length > 0) {
+    throw new Error(
+      `Shopify fulfillment error: ${result.fulfillmentCreateV2.userErrors.map((e) => e.message).join(", ")}`,
+    );
+  }
+
+  return result.fulfillmentCreateV2.fulfillment;
+}

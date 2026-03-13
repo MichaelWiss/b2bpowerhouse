@@ -67,3 +67,22 @@ model Conversation {
 
   @@index([customerId])
 }
+
+// ---------------------------------------------------------------------------
+// Fulfillment Sync — maps ERPNext Delivery Note ↔ Shopify Fulfillment
+// ---------------------------------------------------------------------------
+model FulfillmentSync {
+  id                    String    @id @default(cuid())
+  erpDeliveryNoteName   String    @unique  // ERPNext Delivery Note name (e.g., "MAT-DN-00001")
+  erpSalesOrderName     String             // ERPNext Sales Order this fulfills
+  shopifyOrderId        String             // Shopify order GID
+  shopifyFulfillmentId  String?            // Shopify fulfillment GID (set after creation)
+  trackingNumber        String?
+  carrier               String?
+  status                String             // "pending" | "fulfilled" | "failed"
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([shopifyOrderId])
+  @@index([erpSalesOrderName])
+}
