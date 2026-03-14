@@ -22,7 +22,8 @@ export default function SmoothScroll() {
       gestureOrientation: "vertical",
       normalizeWheel: false,
       smoothTouch: false,
-    });
+      smooth: true,
+    } as ConstructorParameters<typeof Lenis>[0]);
 
     lenisInstance = lenis;
 

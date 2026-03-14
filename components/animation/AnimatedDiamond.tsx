@@ -40,9 +40,7 @@ export default function AnimatedDiamond({
 
     return () => {
       ScrollTrigger.getAll().forEach((st) => {
-        if (st.vars?.scrollTrigger && (st.vars.scrollTrigger as { trigger?: Element }).trigger === document.body) {
-          // handled by page unmount
-        }
+        if (st.trigger === document.body) st.kill();
       });
     };
   }, []);

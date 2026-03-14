@@ -1,180 +1,107 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, type MouseEvent } from "react";
+import { getLenis } from "@/components/animation/SmoothScroll";
 
 export default function Header() {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuVisible, setMenuVisible] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+  const closeMenu = useCallback(() => {
+    document.getElementById("menu")?.classList.remove("open");
+    document.getElementById("header")?.classList.remove("menu-open");
+    getLenis()?.start();
+    setIsOpen(false);
   }, []);
 
-  // Lock body scroll when menu is open
-  useEffect(() => {
-    document.body.style.overflow = menuOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [menuOpen]);
-
-  const toggleMenu = () => {
-    if (!menuOpen) {
-      setMenuVisible(true);
-      requestAnimationFrame(() => setMenuOpen(true));
-    } else {
-      setMenuOpen(false);
-      timeoutRef.current = setTimeout(() => setMenuVisible(false), 800);
+  const toggleMenu = useCallback(() => {
+    if (isOpen) {
+      closeMenu();
+      return;
     }
-  };
+    document.getElementById("menu")?.classList.add("open");
+    document.getElementById("header")?.classList.add("menu-open");
+    getLenis()?.stop();
+    setIsOpen(true);
+  }, [closeMenu, isOpen]);
+
+  const handleNav = useCallback(
+    (e: MouseEvent<HTMLAnchorElement>, href: string) => {
+      e.preventDefault();
+      closeMenu();
+      if (href.startsWith("#")) {
+        const lenis = getLenis() as unknown as { scrollTo?: (target: Element, opts?: { offset?: number }) => void };
+        const el = document.querySelector(href);
+        if (el && lenis?.scrollTo) {
+          setTimeout(() => lenis.scrollTo?.(el, { offset: -64 }), 400);
+          return;
+        }
+      }
+      window.location.href = href;
+    },
+    [closeMenu],
+  );
 
   useEffect(() => {
-    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
-  }, []);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) closeMenu();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [closeMenu, isOpen]);
 
   return (
     <>
-      <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-700 ${
-          scrolled && !menuOpen
-            ? "bg-[#F0EBE1]/95 backdrop-blur-sm"
-            : "bg-transparent"
-        }`}
-      >
-        <div className="relative px-6 md:px-16">
-          {/* Nav row — brand dead-center of viewport, hamburger far right */}
-          <div className="flex items-center justify-center py-5">
-            {/* Center: brand + est — absolutely centered on viewport */}
-            <a href="/" className="relative z-60 text-center">
-              <div
-                className={`text-[15px] tracking-[0.3em] uppercase font-semibold transition-colors duration-500 ${
-                  menuOpen ? "text-[#F0EBE1]" : "text-[#1C1209]"
-                }`}
-                style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
-              >
-                B2B Powerhouse
-              </div>
-              <div
-                className={`text-[8px] tracking-[0.2em] uppercase mt-0.5 transition-colors duration-500 ${
-                  menuOpen ? "text-[#C98B96]" : "text-[#8C8272]"
-                }`}
-              >
-                EST&ensp;•&ensp;2014
-              </div>
-            </a>
-
-            {/* Right: hamburger — 3 equal width lines, pinned to right */}
-            <button
-              onClick={toggleMenu}
-              className="absolute right-6 md:right-16 z-60 flex flex-col justify-center items-center gap-[5px] w-10 h-10 cursor-pointer"
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-            >
-              <span
-                className={`block w-9 h-[1.5px] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] origin-center ${
-                  menuOpen ? "translate-y-[6.5px] rotate-45 bg-[#F0EBE1]" : "bg-[#1C1209]"
-                }`}
-              />
-              <span
-                className={`block w-9 h-[1.5px] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                  menuOpen ? "opacity-0 scale-x-0 bg-[#F0EBE1]" : "bg-[#1C1209]"
-                }`}
-              />
-              <span
-                className={`block w-9 h-[1.5px] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] origin-center ${
-                  menuOpen ? "-translate-y-[6.5px] -rotate-45 bg-[#F0EBE1]" : "bg-[#1C1209]"
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Full-width line — spans entire viewport like Celeres */}
-        <div
-          className={`h-px mx-6 md:mx-10 transition-colors duration-500 ${
-            menuOpen ? "bg-[#F0EBE1]/20" : "bg-[#1C1209]/30"
-          }`}
-        />
-      </header>
-
-      {/* ─── Fullscreen overlay menu — burgundy bg, red links ───── */}
-      <div
-        className={`fixed inset-0 z-40 bg-[#6B1525] flex flex-col items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          menuOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
-        }`}
-        style={{ display: menuVisible ? "flex" : "none" }}
-      >
-        {/* Spacer for header */}
-        <div className="pt-20" />
-
-        {/* Center nav links */}
-        <nav className="flex flex-col items-center gap-6 md:gap-8">
-          {[
-            { label: "Home", href: "/" },
-            { label: "Equipment", href: "/products" },
-            { label: "Brands", href: "/#brands" },
-            { label: "Account", href: "/account" },
-          ].map(({ label, href }, i) => (
-            <div
-              key={label}
-              className={`relative flex items-center gap-4 transition-all ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                menuOpen
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-4"
-              }`}
-              style={{ transitionDuration: "0.8s", transitionDelay: menuOpen ? `${0.15 + i * 0.07}s` : "0s" }}
-            >
-              <a
-                href={href}
-                onClick={toggleMenu}
-                className="font-light uppercase tracking-[0.04em] text-[#E8384F] hover:opacity-50 transition-opacity"
-                style={{
-                  fontSize: "clamp(2.2rem, 5vw, 4rem)",
-                  fontFamily: "var(--font-cormorant), Georgia, serif",
-                }}
-              >
-                {label}
-              </a>
-              {/* Diamond icon on first item */}
-              {i === 0 && (
-                <div className="w-8 h-8 rounded-full border border-[#E8384F]/40 flex items-center justify-center">
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <path d="M5 0L10 5L5 10L0 5L5 0Z" fill="#E8384F" />
+      <div className="header" id="header">
+        <nav className="menu" id="menu" role="navigation">
+          <div className="menu-section">
+            {[
+              { label: "Home", href: "#intro" },
+              { label: "Portfolio", href: "#portfolio" },
+              { label: "Fund Partners", href: "#fund-partners" },
+              { label: "Our Team", href: "#team" },
+            ].map(({ label, href }) => (
+              <a key={label} href={href} className="menu-link" onClick={(e) => handleNav(e, href)}>
+                <span className="heading">{label}</span>
+                <span className="menu-arrow">
+                  <svg width="33" height="16" viewBox="0 0 33 16">
+                    <path d="M25.9883 7.30838C24.1215 5.30618 22.5783 2.8282 22.4814 2.76804e-07C25.3984 3.37666 28.7622 6.42292 33 8.00002C28.7622 9.57711 25.3983 12.6233 22.4813 16C22.5782 13.1718 24.1214 10.6938 25.9883 8.69162L17.6667 8.69382C17.2793 8.69382 16.0707 9.0066 15.637 9.14096C12.6144 10.0749 10.7938 12.6167 9.41785 15.315L8.05784e-09 15.315C1.0545 11.2335 4.22469 8.85464 8.25337 8.0683C4.37879 7.47358 0.601084 4.76873 8.52011e-05 0.68943L9.41794 0.68943C10.7939 3.38767 12.6145 5.92953 15.6371 6.86345C16.0708 6.99781 17.2794 7.31059 17.6668 7.31059L25.9883 7.30838Z" />
                   </svg>
-                </div>
-              )}
-            </div>
-          ))}
+                </span>
+              </a>
+            ))}
+          </div>
+
+          <ul className="menu-footer-links">
+            <li><a href="#">Fraud Warning</a></li>
+            <li><a href="#">Privacy</a></li>
+          </ul>
         </nav>
 
-        {/* Bottom links */}
-        <div
-          className={`pb-8 flex gap-6 transition-all ease-[cubic-bezier(0.16,1,0.3,1)] ${
-            menuOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          }`}
-          style={{ transitionDuration: "0.8s", transitionDelay: menuOpen ? "0.5s" : "0s" }}
-        >
-          <a
-            href="/privacy"
-            onClick={toggleMenu}
-            className="text-[13px] tracking-[0.05em] text-[#E8384F]/70 hover:text-[#E8384F] transition-colors"
-            style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
-          >
-            Privacy
-          </a>
-          <a
-            href="/contact"
-            onClick={toggleMenu}
-            className="text-[13px] tracking-[0.05em] text-[#E8384F]/70 hover:text-[#E8384F] transition-colors"
-            style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
-          >
-            Contact
-          </a>
+        <div className="container">
+          <div className="header-wrap">
+            <a href="#intro" className="header-home" aria-label="B2B Powerhouse homepage">
+              <span style={{ fontSize: "18px", letterSpacing: "0.14em", textTransform: "uppercase" }}>
+                B2B Powerhouse
+              </span>
+            </a>
+          </div>
+          <div className="header-line"></div>
         </div>
       </div>
+
+      <button
+        className="menu-button"
+        id="menuBtn"
+        onClick={toggleMenu}
+        aria-label={isOpen ? "Close menu" : "Open menu"}
+      >
+        <div className="menu-icon">
+          <span className="menu-line" />
+          <span className="menu-line" />
+          <span className="menu-line close" />
+          <span className="menu-line" />
+        </div>
+      </button>
     </>
   );
 }

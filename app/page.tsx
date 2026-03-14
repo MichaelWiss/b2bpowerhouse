@@ -1,446 +1,347 @@
-import { Cormorant_Garamond } from "next/font/google";
-import ScrollReveal from "@/components/animation/ScrollReveal";
-import TextReveal from "@/components/animation/TextReveal";
-import AnimatedDiamond from "@/components/animation/AnimatedDiamond";
-import ParallaxImage from "@/components/animation/ParallaxImage";
-import CountUp from "@/components/animation/CountUp";
-import Accordion from "@/components/ui/Accordion";
-import Carousel from "@/components/ui/Carousel";
-
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  style: ["normal", "italic"],
-  variable: "--font-cormorant",
-});
-
-const equipmentCards = [
-  { label: "Free Weights", sub: "Barbells, dumbbells, plates & storage", img: "https://images.unsplash.com/photo-1517963879433-6ad2171073fb?w=600&q=80" },
-  { label: "Cardio", sub: "Treadmills, bikes, rowers & ellipticals", img: "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=600&q=80" },
-  { label: "Strength Machines", sub: "Cables, selectorized & plate-loaded", img: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80" },
-  { label: "Functional Training", sub: "Rigs, sleds, kettlebells & battle ropes", img: "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=600&q=80" },
-  { label: "Recovery", sub: "Stretching zones, foam rollers & massage", img: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&q=80" },
-  { label: "Flooring & Matting", sub: "Rubber, foam & turf for every application", img: "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&q=80" },
-];
-
-const faqItems = [
-  {
-    title: "What are your minimum order quantities?",
-    content: "We don't believe in minimum order theatre. Whether you're outfitting a single studio or a 20-location chain, we work with you at the volume that makes sense. That said, wholesale pricing tiers improve at higher quantities.",
-  },
-  {
-    title: "How does white-glove delivery work?",
-    content: "Our logistics team coordinates end-to-end delivery including freight, liftgate service, inside placement, and debris removal. We handle customs and duties for international shipments. Average fulfillment is 48 hours from order confirmation.",
-  },
-  {
-    title: "Do you offer equipment financing?",
-    content: "Yes. We partner with specialist commercial fitness lenders who offer 12–60 month terms. Approval typically takes 24–48 hours. We can structure lease-to-own or traditional financing depending on your situation.",
-  },
-  {
-    title: "Can I visit a showroom?",
-    content: "We maintain a 12,000 sq ft showroom and testing facility. Visits are by appointment only so we can ensure dedicated time with your account manager and access to the specific equipment categories you're evaluating.",
-  },
-  {
-    title: "What warranty and support do you provide?",
-    content: "All equipment carries the manufacturer's full commercial warranty. We provide an additional 12-month parts guarantee on all orders over $10K. Our technical support team is available for installation guidance and troubleshooting.",
-  },
-];
+import TestimonialSlider from "@/components/ui/TestimonialSlider";
 
 export default function Home() {
   return (
-    <div className={`${cormorant.variable} bg-[#F0EBE1] text-[#1C1209]`}>
-
-      {/* ─── HERO PHOTO (full-width parallax image like Celeres) ──────── */}
-      <section className="relative px-6 md:px-16 pt-6">
-        {/* Diamond icon — fixed to left edge, rotates on scroll like Celeres */}
-        <AnimatedDiamond
-          className="absolute left-4 md:left-8 top-12 z-10"
-          size={40}
-          color="#E8384F"
-        />
-        <div className="max-w-350 mx-auto">
-          <ParallaxImage
-            src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1400&q=80"
-            alt="Professional gym floor"
-            className="h-[60vh] md:h-[75vh]"
-            speed={0.12}
-          />
-        </div>
-      </section>
-
-      {/* ─── IDENTITY LINE (RED, centered, text-reveal like Celeres) ──────── */}
-      <section className="py-14 md:py-20">
-        <div className="max-w-350 mx-auto px-6 md:px-16 flex items-center justify-center gap-6">
-          <TextReveal
-            tag="p"
-            className="font-display font-light text-center text-[#E8384F] tracking-[0.02em] uppercase"
-            stagger={0.06}
-            duration={1.2}
-          >
-            A Non-Conformist Gym Supplier
-          </TextReveal>
-          <span className="text-[#8C8272] text-lg hidden md:inline">↓</span>
-        </div>
-      </section>
-
-      {/* ─── HERO TEXT (centered with inline image, text-reveal like Celeres) ── */}
-      <section className="relative px-6 md:px-16 pt-16 pb-24 md:pt-24 md:pb-36 overflow-hidden flex flex-col items-center justify-center">
-
-        {/* Top headline — centered, word reveal */}
-        <TextReveal
-          tag="h1"
-          className="font-display font-light leading-[0.88] tracking-[-0.02em] text-center text-[#1C1209]"
-          stagger={0.12}
-          duration={1.5}
-        >
-          INDEPENDENTLY MINDED &amp;
-        </TextReveal>
-
-        {/* Small inline image between headlines — parallax like Celeres */}
-        <ScrollReveal className="my-4 md:my-6 w-20 md:w-28 h-32 md:h-44 overflow-hidden mx-auto" delay={0.3}>
-          <img
-            src="https://images.unsplash.com/photo-1517963879433-6ad2171073fb?w=300&q=80"
-            alt="Barbell plates"
-            className="w-full h-full object-cover"
-          />
-        </ScrollReveal>
-
-        {/* Bottom headline — centered, word reveal */}
-        <TextReveal
-          tag="h1"
-          className="font-display font-light leading-[0.88] tracking-[-0.02em] text-center text-[#1C1209]"
-          stagger={0.12}
-          duration={1.5}
-          delay={0.4}
-        >
-          PERSONALLY EQUIPPED
-        </TextReveal>
-      </section>
-
-      {/* ─── SCATTERED IMAGES (cream bg — parallax like Celeres) ─────────── */}
-      <section className="max-w-350 mx-auto px-6 md:px-16 py-24 md:py-40">
-        <div className="relative h-120 md:h-150">
-          <ParallaxImage
-            src="https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=600&q=80"
-            alt="Cardio machines"
-            className="absolute top-0 left-[5%] w-48 md:w-72 h-64 md:h-96"
-            speed={0.2}
-          />
-          <ParallaxImage
-            src="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400&q=80"
-            alt="Squat rack"
-            className="absolute top-[15%] left-[38%] w-32 md:w-48 h-48 md:h-64 hidden sm:block"
-            speed={0.1}
-          />
-          <ParallaxImage
-            src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=500&q=80"
-            alt="Dumbbell rack"
-            className="absolute top-[30%] right-[4%] w-40 md:w-60 h-56 md:h-80"
-            speed={0.25}
-          />
-        </div>
-      </section>
-
-      {/* ─── ABOUT ─────────────────────────────────────────────────────── */}
-      <section className="max-w-350 mx-auto px-6 md:px-16 py-36 md:py-56">
-        <div className="grid md:grid-cols-2 gap-0">
-          <div className="pb-10 md:pb-0 md:pr-16">
-            <TextReveal
-              tag="h2"
-              className="font-display font-light leading-[0.92] text-[#1C1209]"
-              stagger={0.1}
-              duration={1.4}
-            >
-              A GYM SUPPLIER UNLIKE MOST
-            </TextReveal>
-            </div>
-            <div className="border-l border-[#D5CEC4] pl-10 md:pl-16 flex flex-col justify-end min-h-48 md:min-h-72">
-              <p className="text-sm md:text-base leading-relaxed text-[#3A2E22] mb-6">
-                Since our founding, B2B Powerhouse has done things differently. Despite being a wholesale operation, we have a hands-on philosophy that demonstrates our commitment to adding value beyond mere equipment.
-              </p>
-              <p className="text-sm md:text-base leading-relaxed text-[#3A2E22]">
-                In a competitive landscape where many suppliers simply provide catalogues, our commitment to being an active partner makes all the difference. Our team of seasoned operators delivers operational expertise, market insight and unwavering guidance.
-              </p>
-            </div>
+    <>
+      <div className="intro-track" id="intro">
+        <div className="intro">
+          <div className="intro-video" id="introVideo">
+            <img
+              src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&h=1080&fit=crop&q=80"
+              alt="Professional gym floor"
+              className="intro-video-file"
+            />
           </div>
-        </ScrollReveal>
-      </section>
 
-      {/* ─── WHEN WE COMMIT ────────────────────────────────────────────────── */}
-      <section className="max-w-350 mx-auto px-6 md:px-16 py-36 md:py-56">
-        <ScrollReveal>
-          <div className="grid md:grid-cols-2 gap-0">
-            <div className="pb-10 md:pb-0 md:pr-16">
-              <h2
-                className="font-display font-light leading-[0.9] text-[#1C1209]"
-                style={{ fontSize: "clamp(2.8rem, 6vw, 5.5rem)", fontFamily: "var(--font-cormorant), Georgia, serif" }}
-              >
-                WHEN WE<br />COMMIT,<br />WE COMMIT
-              </h2>
-            </div>
-            <div className="border-l border-[#D5CEC4] pl-10 md:pl-16 flex flex-col justify-between min-h-96 md:min-h-[32rem]">
-              <div className="self-end">
-                <p className="text-sm text-[#8C8272]">↓</p>
+          <h1 className="intro-tagline" id="introTagline">
+            <span data-split="" className="tagline">Independently <br />minded <em>&amp;</em></span>
+            <span data-split="" className="tagline">personally <br />equipped</span>
+          </h1>
+
+          <div className="intro-content" id="introContent">
+            <div className="container">
+            <div className="intro-columns">
+              <div className="intro-subtitle">
+                <h2 data-split="" className="subtagline">a non–conformist gym supplier</h2>
               </div>
-              <div>
-                <p className="text-sm md:text-base leading-relaxed text-[#3A2E22] mb-6">
-                  Our approach to wholesale is distinct. We supply directly to operators who have demonstrated real commitment to quality in areas we know well and are able to add value.
-                </p>
-                <p className="text-sm md:text-base leading-relaxed text-[#3A2E22]">
-                  Once we&rsquo;re in, we are committed. Our focus is on achieving a successful outcome for every installation. When we see conviction play out, we don&rsquo;t hesitate to double- or even triple-down with our capital and time.
-                </p>
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* ─── STATS (burgundy bg, flex row like Celeres) ───────────────────── */}
-      <section className="bg-[#6B1525] px-6 md:px-16 py-24 md:py-36">
-        <ScrollReveal>
-        <div className="max-w-350 mx-auto">
-          <div className="flex items-end justify-between border-b border-[#8B2535] pb-6 mb-6">
-            <p
-              className="font-display font-light text-[#E8384F] leading-none"
-              style={{ fontSize: "clamp(3.5rem, 8vw, 6rem)", fontFamily: "var(--font-cormorant), Georgia, serif" }}
-            >
-              $24M+
-            </p>
-            <p className="text-[10px] tracking-[0.2em] uppercase text-[#C98B96] pb-2">AUM</p>
-          </div>
-          <div className="flex items-end justify-between border-b border-[#8B2535] pb-6 mb-6">
-            <p
-              className="font-display font-light text-[#E8384F] leading-none"
-              style={{ fontSize: "clamp(3.5rem, 8vw, 6rem)", fontFamily: "var(--font-cormorant), Georgia, serif" }}
-            >
-              340+
-            </p>
-            <p className="text-[10px] tracking-[0.2em] uppercase text-[#C98B96] pb-2">Total deals</p>
-          </div>
-          <div className="flex items-end justify-between pb-6">
-            <p
-              className="font-display font-light text-[#E8384F] leading-none"
-              style={{ fontSize: "clamp(3.5rem, 8vw, 6rem)", fontFamily: "var(--font-cormorant), Georgia, serif" }}
-            >
-              48hr
-            </p>
-            <p className="text-[10px] tracking-[0.2em] uppercase text-[#C98B96] pb-2">Avg. fulfilment time</p>
-          </div>
-        </div>
-        </ScrollReveal>
-      </section>
-
-      {/* ─── EQUIPMENT HEADING (centered icon above text, matching screenshot) ─ */}
-      <section className="py-20 md:py-28">
-        <div className="max-w-350 mx-auto px-6 md:px-16">
-          <ScrollReveal>
-            <div className="flex flex-col items-center text-center pb-10 border-b border-[#D5CEC4]">
-              <div className="w-14 h-14 rounded-full border border-[#6B1525] flex items-center justify-center mb-8">
-                <div className="w-3 h-3 bg-[#6B1525]" />
-              </div>
-              <h2
-                className="font-display italic font-light text-[#1C1209]"
-                style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)", fontFamily: "var(--font-cormorant), Georgia, serif" }}
-              >
-                EQUIPMENT &amp; CONVICTION
-              </h2>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ─── EQUIPMENT CAROUSEL (white bg) ──────────────────────────────────── */}
-      <section className="pb-24 md:pb-36">
-        <div className="max-w-350 mx-auto px-6 md:px-16">
-          <ScrollReveal>
-            <Carousel>
-              {equipmentCards.map(({ label, sub, img }) => (
-                <a
-                  key={label}
-                  href="/products"
-                  className="group relative overflow-hidden block w-72 md:w-80 aspect-4/3 shrink-0"
-                >
-                  <img
-                    src={img}
-                    alt={label}
-                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/15 to-transparent p-5 md:p-7 flex flex-col justify-end">
-                    <p
-                      className="font-display font-medium text-white leading-tight mb-1 drop-shadow-sm"
-                      style={{ fontSize: "clamp(1rem, 2vw, 1.4rem)", fontFamily: "var(--font-cormorant), Georgia, serif" }}
-                    >
-                      {label}
-                    </p>
-                    <p className="text-[9px] md:text-[10px] tracking-[0.15em] uppercase text-white/80">
-                      {sub}
-                    </p>
-                  </div>
+              <div className="intro-arrow">
+                <a href="#about" aria-label="scroll down">
+                  <svg width="16" height="33" viewBox="0 0 16 33" fill="currentColor">
+                    <path d="M8.69162 25.9883C10.6938 24.1215 13.1718 22.5783 16 22.4814C12.6233 25.3984 9.57708 28.7622 7.99998 33C6.42289 28.7622 3.37666 25.3983 0 22.4813C2.8282 22.5782 5.30618 24.1214 7.30838 25.9883L7.30618 17.6667C7.30618 17.2793 6.9934 16.0707 6.85904 15.637C5.92512 12.6144 3.38327 10.7938 0.685024 9.41786L0.685025 0C4.76653 1.0545 7.14536 4.22469 7.9317 8.25337C8.52642 4.37879 11.2313 0.601085 15.3106 8.58323e-05V9.41794C12.6123 10.7939 10.0705 12.6145 9.13655 15.6371C9.00219 16.0708 8.68941 17.2794 8.68941 17.6668L8.69162 25.9883Z" />
+                  </svg>
                 </a>
-              ))}
-            </Carousel>
-          </ScrollReveal>
+              </div>
+            </div>
+            </div>
+          </div>
         </div>
-      </section>
-
-      {/* ─── OUR BRANDS heading (centered with diamond, like Celeres) ──── */}
-      <section className="max-w-350 mx-auto px-6 md:px-16 pt-24 md:pt-36 pb-8">
-        <ScrollReveal>
-          <div className="flex flex-col items-center text-center mb-12">
-            <h2
-              className="font-display font-light leading-[0.92] text-[#1C1209] mb-6"
-              style={{ fontSize: "clamp(2.4rem, 5vw, 4rem)", fontFamily: "var(--font-cormorant), Georgia, serif" }}
-            >
-              OUR BRANDS
-            </h2>
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="mb-6">
-              <path d="M5 0L10 5L5 10L0 5L5 0Z" fill="#6B1525" />
-            </svg>
-            <p className="text-sm md:text-base leading-relaxed text-[#3A2E22] max-w-xl mb-6">
-              We believe great gyms deserve more than just a catalogue. So we partner with brands that show real commitment to quality and deep understanding of what operators need.
-            </p>
-            <a href="/products" className="text-[10px] tracking-[0.25em] uppercase text-[#8C8272] hover:text-[#1C1209] transition-colors">
-              Our brands →
-            </a>
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* ─── BRANDS (cream bg, scattered collage like Celeres screenshot) ──── */}
-      <section className="max-w-350 mx-auto px-6 md:px-16 py-24 md:py-36">
-        <ScrollReveal>
-          <div className="relative">
-            {/* Row 1 */}
-            <div className="flex flex-wrap items-baseline justify-center gap-x-6 md:gap-x-10 gap-y-4 mb-4">
-              <span className="text-sm md:text-base tracking-[0.08em] uppercase font-medium text-[#1C1209]">ROGUE</span>
-              <span className="text-[10px] tracking-[0.15em] uppercase text-[#8C8272]">EST. 2007</span>
-              <div className="w-14 h-10 overflow-hidden hidden sm:block"><img src="https://images.unsplash.com/photo-1517963879433-6ad2171073fb?w=100&q=60" alt="" className="w-full h-full object-cover" /></div>
-              <span className="text-lg md:text-xl tracking-[0.04em] uppercase font-light text-[#1C1209]">TECHNOGYM</span>
-              <span className="text-[10px] tracking-[0.15em] uppercase text-[#8C8272]">EST. 1983</span>
-            </div>
-            {/* Row 2 */}
-            <div className="flex flex-wrap items-baseline justify-center gap-x-8 md:gap-x-12 gap-y-4 mb-4">
-              <span className="text-base md:text-lg tracking-[0.06em] uppercase font-light text-[#1C1209]">LIFE FITNESS</span>
-              <span className="text-[10px] tracking-[0.15em] uppercase text-[#8C8272]">EST. 1977</span>
-              <span className="text-sm tracking-[0.1em] uppercase font-medium text-[#1C1209]">ELEIKO</span>
-              <div className="w-12 h-8 overflow-hidden hidden sm:block"><img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=100&q=60" alt="" className="w-full h-full object-cover" /></div>
-              <span className="text-base md:text-lg tracking-[0.05em] uppercase font-light text-[#1C1209]">PRECOR</span>
-            </div>
-            {/* Row 3 */}
-            <div className="flex flex-wrap items-baseline justify-center gap-x-6 md:gap-x-10 gap-y-4 mb-4">
-              <span className="text-sm tracking-[0.1em] uppercase font-medium text-[#1C1209]">KEISER</span>
-              <span className="text-[10px] tracking-[0.15em] uppercase text-[#8C8272]">EST. 1978</span>
-              <span className="text-lg md:text-xl tracking-[0.04em] uppercase font-light text-[#1C1209]">HAMMER STRENGTH</span>
-              <span className="text-sm tracking-[0.08em] uppercase font-medium text-[#1C1209]">MATRIX</span>
-              <div className="w-10 h-8 overflow-hidden hidden sm:block"><img src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=100&q=60" alt="" className="w-full h-full object-cover" /></div>
-            </div>
-            {/* Row 4 */}
-            <div className="flex flex-wrap items-baseline justify-center gap-x-8 md:gap-x-12 gap-y-4 mb-4">
-              <span className="text-base tracking-[0.06em] uppercase font-light text-[#1C1209]">CONCEPT2</span>
-              <span className="text-sm tracking-[0.1em] uppercase font-medium text-[#1C1209]">ASSAULT</span>
-              <span className="text-[10px] tracking-[0.15em] uppercase text-[#8C8272]">EST. 2014</span>
-              <span className="text-lg tracking-[0.04em] uppercase font-light text-[#1C1209]">CYBEX</span>
-              <div className="w-12 h-10 overflow-hidden hidden sm:block"><img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=100&q=60" alt="" className="w-full h-full object-cover" /></div>
-            </div>
-            {/* Row 5 */}
-            <div className="flex flex-wrap items-baseline justify-center gap-x-6 md:gap-x-10 gap-y-4">
-              <span className="text-sm tracking-[0.08em] uppercase font-medium text-[#1C1209]">FORCE USA</span>
-              <span className="text-base md:text-lg tracking-[0.05em] uppercase font-light text-[#1C1209]">BELLS OF STEEL</span>
-              <span className="text-[10px] tracking-[0.15em] uppercase text-[#8C8272]">EST. 2013</span>
-              <span className="text-sm tracking-[0.1em] uppercase font-medium text-[#1C1209]">YORK</span>
-            </div>
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* ─── FAQ ACCORDION ────────────────────────────────────────────────── */}
-      <section>
-      <div className="max-w-350 mx-auto px-6 md:px-16 py-24 md:py-36">
-        <ScrollReveal>
-          <div className="grid md:grid-cols-2 gap-16 md:gap-24">
-            <div>
-              <p className="text-[10px] tracking-[0.25em] uppercase text-[#8C8272] mb-6">Common questions</p>
-              <h2
-                className="font-display font-light leading-[0.92] text-[#1C1209]"
-                style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)", fontFamily: "var(--font-cormorant), Georgia, serif" }}
-              >
-                EVERYTHING<br />YOU NEED<br />TO KNOW
-              </h2>
-            </div>
-            <div className="border-t border-[#D5CEC4]">
-              <Accordion items={faqItems} />
-            </div>
-          </div>
-        </ScrollReveal>
       </div>
-      </section>
 
-      {/* ─── EQUIPMENT PARTNERS heading (centered with diamond, like Celeres) ── */}
-      <section className="px-6 md:px-16 pt-16 md:pt-24 pb-0">
-        <div className="max-w-350 mx-auto">
-          <ScrollReveal>
-            <div className="flex flex-col items-center text-center mb-12">
-              <h2
-                className="font-display font-light leading-[0.92] text-[#1C1209] mb-6"
-                style={{ fontSize: "clamp(2.4rem, 5vw, 4rem)", fontFamily: "var(--font-cormorant), Georgia, serif" }}
-              >
-                EQUIPMENT PARTNERS
-              </h2>
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="mb-6">
-                <path d="M5 0L10 5L5 10L0 5L5 0Z" fill="#6B1525" />
-              </svg>
-              <p className="text-sm md:text-base leading-relaxed text-[#3A2E22] max-w-xl mb-6">
-                With select, like-minded partners we co-develop bespoke equipment lines as well as supplying their full commercial catalogues.
-              </p>
-              <a href="/products" className="text-[10px] tracking-[0.25em] uppercase text-[#8C8272] hover:text-[#1C1209] transition-colors">
-                Equipment partners →
-              </a>
+      <div className="bg-beige" data-header-bg="bg-beige" id="gallery">
+        <div className="gallery" id="gallerySection">
+          <div className="container">
+          <div className="gallery-columns">
+            <div className="gallery-column one">
+              <img
+                src="https://images.unsplash.com/photo-1558611848-73f7eb4001a1?w=800&h=1200&fit=crop&q=80"
+                alt="Free weights area"
+                className="gallery-image"
+                loading="lazy"
+              />
             </div>
-          </ScrollReveal>
+            <div className="gallery-column two">
+              <img
+                src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&h=1000&fit=crop&q=80"
+                alt="Cardio equipment"
+                className="gallery-image"
+                loading="lazy"
+              />
+            </div>
+            <div className="gallery-column three">
+              <img
+                src="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=800&h=1400&fit=crop&q=80"
+                alt="Functional training"
+                className="gallery-image"
+                loading="lazy"
+              />
+            </div>
+          </div>
+          </div>
         </div>
-      </section>
 
-      {/* ─── PARTNER GYMS (large centered stacked like Celeres) ─────────── */}
-      <section className="px-6 md:px-16 py-12 md:py-20">
-        <div className="max-w-350 mx-auto">
-          <ScrollReveal>
-            <div className="border-t border-[#D5CEC4]">
-              {[
-                "IRON ARCHITECTURE STUDIOS",
-                "MERIDIAN PERFORMANCE CENTRES",
-                "SUMMIT ATHLETIC GROUP",
-              ].map((name) => (
-                <div key={name} className="border-b border-[#D5CEC4] py-8 md:py-10">
-                  <p
-                    className="font-display font-light text-[#1C1209] tracking-[0.04em] text-center"
-                    style={{ fontSize: "clamp(1.4rem, 3.5vw, 2.6rem)", fontFamily: "var(--font-cormorant), Georgia, serif" }}
-                  >
-                    {name}
+        <div id="about" className="split-section">
+          <div className="split-column">
+            <div className="split-content left">
+              <div className="split-content-heading">
+                <h2 className="heading">A Gym Supplier Unlike Most</h2>
+              </div>
+            </div>
+          </div>
+
+          <div id="split-animation" className="split-column">
+            <div className="split-sticky">
+              <div className="split-sideways">
+                <div className="split-content right">
+                  <div className="split-content-paragraph">
+                    <div className="split-content-arrow">
+                      <svg width="16" height="33" viewBox="0 0 16 33" fill="currentColor">
+                        <path d="M8.69162 25.9883C10.6938 24.1215 13.1718 22.5783 16 22.4814C12.6233 25.3984 9.57708 28.7622 7.99998 33C6.42289 28.7622 3.37666 25.3983 0 22.4813C2.8282 22.5782 5.30618 24.1214 7.30838 25.9883L7.30618 17.6667C7.30618 17.2793 6.9934 16.0707 6.85904 15.637C5.92512 12.6144 3.38327 10.7938 0.685024 9.41786L0.685025 0C4.76653 1.0545 7.14536 4.22469 7.9317 8.25337C8.52642 4.37879 11.2313 0.601085 15.3106 8.58323e-05V9.41794C12.6123 10.7939 10.0705 12.6145 9.13655 15.6371C9.00219 16.0708 8.68941 17.2794 8.68941 17.6668L8.69162 25.9883Z" />
+                      </svg>
+                    </div>
+                    <div className="rich-text">
+                      <p>
+                        Since our founding, B2B Powerhouse has done things differently. Despite being a wholesale operation,
+                        we have a hands-on philosophy that demonstrates our commitment to adding value beyond mere equipment.
+                      </p>
+                      <p>
+                        In a competitive landscape where many suppliers simply provide catalogues, our commitment to being an active
+                        partner makes all the difference.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="split-background bg-moss">
+                <img src="https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1200&h=800&fit=crop&q=80" loading="lazy" alt="" className="split-image" />
+              </div>
+
+              <div className="split-background bg-burgundy-sec">
+                <div className="testimonial" data-animate="">
+                  <div className="animated-icon">
+                    <svg width="78" height="78" viewBox="0 0 78 78" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ stroke: "currentColor" }}>
+                      <path className="big-ring" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" strokeWidth="3" fill="none" />
+                      <path className="ring-one" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" strokeWidth="1" fill="none" />
+                      <path className="ring-two" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" strokeWidth="1" fill="none" />
+                      <path className="rotate-left" d="M44 39L39 34L34 39L39 44L44 39Z" fill="currentColor" stroke="none" />
+                    </svg>
+                  </div>
+                  <blockquote className="subtitle">
+                    &ldquo;We supply directly to operators who have demonstrated real commitment to quality.&rdquo;
+                  </blockquote>
+                  <cite className="cite">B2B Powerhouse</cite>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="split-section">
+          <div className="split-column">
+            <div className="split-content left">
+              <div className="split-content-heading">
+                <h2 className="heading">When We Commit, We Commit</h2>
+              </div>
+            </div>
+          </div>
+          <div className="split-column">
+            <div className="split-content right">
+              <div className="split-content-paragraph">
+                <div className="split-content-arrow">
+                  <svg width="16" height="33" viewBox="0 0 16 33" fill="currentColor">
+                    <path d="M8.69162 25.9883C10.6938 24.1215 13.1718 22.5783 16 22.4814C12.6233 25.3984 9.57708 28.7622 7.99998 33C6.42289 28.7622 3.37666 25.3983 0 22.4813C2.8282 22.5782 5.30618 24.1214 7.30838 25.9883L7.30618 17.6667C7.30618 17.2793 6.9934 16.0707 6.85904 15.637C5.92512 12.6144 3.38327 10.7938 0.685024 9.41786L0.685025 0C4.76653 1.0545 7.14536 4.22469 7.9317 8.25337C8.52642 4.37879 11.2313 0.601085 15.3106 8.58323e-05V9.41794C12.6123 10.7939 10.0705 12.6145 9.13655 15.6371C9.00219 16.0708 8.68941 17.2794 8.68941 17.6668L8.69162 25.9883Z" />
+                  </svg>
+                </div>
+                <div className="rich-text">
+                  <p>
+                    Our focus is on achieving a successful outcome for every installation.
+                    When we see conviction play out, we do not hesitate to double down with capital and time.
                   </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-burgundy-full" data-header-bg="bg-burgundy">
+        <div className="section">
+          <div className="container">
+          <div className="statistics">
+            <div className="statistic-row" data-text-animate="">
+              <div data-split="" className="subtitle">AUM</div>
+              <div data-split="" className="statistic-number">$650m</div>
+            </div>
+            <div className="statistic-row" data-text-animate="">
+              <div data-split="" className="subtitle">Total Exits</div>
+              <div data-split="" className="statistic-number">12</div>
+            </div>
+            <div className="statistic-row" data-text-animate="">
+              <div data-split="" className="subtitle">Total Fund IRR</div>
+              <div data-split="" className="statistic-number">40%+</div>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-beige" data-header-bg="bg-beige">
+        <div className="section">
+          <div className="container align-center" data-animate="">
+            <div style={{ color: "var(--ruby)", display: "inline-block" }}>
+              <div className="animated-icon">
+                <svg width="78" height="78" viewBox="0 0 78 78" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ stroke: "currentColor" }}>
+                  <path className="big-ring" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" strokeWidth="3" fill="none" />
+                  <path className="ring-one" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" strokeWidth="1" fill="none" />
+                  <path className="ring-two" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" strokeWidth="1" fill="none" />
+                  <path className="rotate-left" d="M44 39L39 34L34 39L39 44L44 39Z" fill="currentColor" stroke="none" />
+                </svg>
+              </div>
+            </div>
+            <div className="margin-top-medium">
+              <h2 className="heading">Capital <em>&amp;</em> conviction</h2>
+            </div>
+          </div>
+        </div>
+
+        <div className="container">
+          <div className="capital-image" id="capitalImage">
+            <img src="https://images.unsplash.com/photo-1576678927484-cc907957088c?w=1400&h=900&fit=crop&q=80" loading="lazy" alt="" className="capital-image-bg" />
+            <img src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=1400&h=900&fit=crop&q=80" loading="lazy" alt="" className="capital-image-front" />
+          </div>
+        </div>
+
+        <div className="section" id="portfolio">
+          <div className="container">
+            <div className="align-center relative">
+              <div className="mw-640 auto">
+                <h2 className="subheading">our portfolio</h2>
+                <svg width="10" height="10" fill="currentColor" viewBox="0 0 10 10" className="bullet auto"><path d="M5 10L0 5L5 0L10 5L5 10Z" /></svg>
+                <p className="paragraph">
+                  We believe great operators deserve more than just a cheque. So we invest our time and capital in businesses
+                  that show early market traction and deep customer understanding.
+                </p>
+              </div>
+              <div className="right-button">
+                <a href="#" className="button">
+                  <div>View our portfolio</div>
+                  <svg width="33" height="16" viewBox="0 0 33 16" fill="currentColor"><path d="M25.9883 7.30838C24.1215 5.30618 22.5783 2.8282 22.4814 2.76804e-07C25.3984 3.37666 28.7622 6.42292 33 8.00002C28.7622 9.57711 25.3983 12.6233 22.4813 16C22.5782 13.1718 24.1214 10.6938 25.9883 8.69162L17.6667 8.69382C17.2793 8.69382 16.0707 9.0066 15.637 9.14096C12.6144 10.0749 10.7938 12.6167 9.41785 15.315L8.05784e-09 15.315C1.0545 11.2335 4.22469 8.85464 8.25337 8.0683C4.37879 7.47358 0.601084 4.76873 8.52011e-05 0.68943L9.41794 0.68943C10.7939 3.38767 12.6145 5.92953 15.6371 6.86345C16.0708 6.99781 17.2794 7.31059 17.6668 7.31059L25.9883 7.30838Z" /></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="container">
+            <div className="case-study-group">
+              <div className="case-studies">
+                {[
+                  ["harbinger-motors", "Harbinger Motors", "Electric Vehicle Chassis"],
+                  ["gori-ai", "Gori AI", "Cross Border Logistics"],
+                  ["wingstop", "Wingstop", "Franchise Growth"],
+                  ["acceptto", "Acceptto", "Identity Access Management"],
+                  ["jaja-finance", "Jaja Finance", "Consumer FinTech"],
+                  ["pagaya-technologies", "Pagaya", "AI Lending Platform"],
+                  ["obrizum-group", "Obrizum Group", "Adaptive Learning"],
+                  ["anyvan", "AnyVan", "Logistics Technology"],
+                  ["skims", "SKIMS", "Retail Apparel"],
+                  ["stratavision", "StrataVision", "Retail Analytics"],
+                  ["phantom-ai", "Phantom AI", "Automotive ADAS"],
+                  ["lifelong-labs", "Lifelong Labs", "Consumer Durables"],
+                  ["studious", "Studious", "Operational Living Real Estate"],
+                ].map(([slug, name, detail]) => (
+                  <div className="case-study" data-trigger={slug} key={slug}>
+                    <a href="#" className="case-study-link">
+                      <h3 className="heading">{name}</h3>
+                      <div className="cite">{detail}</div>
+                    </a>
+                  </div>
+                ))}
+              </div>
+
+              <div className="case-studies-info" style={{ marginTop: "var(--m-medium)", position: "relative", minHeight: "160px" }}>
+                {[
+                  "harbinger-motors",
+                  "gori-ai",
+                  "wingstop",
+                  "acceptto",
+                  "jaja-finance",
+                  "pagaya-technologies",
+                  "obrizum-group",
+                  "anyvan",
+                  "skims",
+                  "stratavision",
+                  "phantom-ai",
+                  "lifelong-labs",
+                  "studious",
+                ].map((slug) => (
+                  <div className="case-study-info-block" data-label={slug} key={slug}>
+                    <img src="https://images.unsplash.com/photo-1593079831268-3381b0db4a77?w=400&h=300&fit=crop&q=80" className="thumb-image" alt="" loading="lazy" />
+                    <div>
+                      <div className="fund-detail">Invested: 2024</div>
+                      <p className="paragraph" style={{ marginTop: "8px" }}>
+                        Portfolio company profile and operational value-add summary.
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="swiper" id="carouselSection">
+          <div className="carousel" id="carousel">
+            {[
+              ["Free Weights", "https://images.unsplash.com/photo-1558611848-73f7eb4001a1?w=600&h=800&fit=crop&q=80"],
+              ["Cardio", "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&h=800&fit=crop&q=80"],
+              ["Strength Machines", "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=800&fit=crop&q=80"],
+              ["Functional Training", "https://images.unsplash.com/photo-1605296867424-35fc25c9212a?w=600&h=800&fit=crop&q=80"],
+              ["Recovery", "https://images.unsplash.com/photo-1637666062717-1c6bcfa4a4df?w=600&h=800&fit=crop&q=80"],
+              ["Matting", "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&h=800&fit=crop&q=80"],
+              ["Accessories", "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&h=800&fit=crop&q=80"],
+            ].map(([label, src]) => (
+              <div className="carousel-slide" key={label}>
+                <img src={src} className="carousel-image" loading="lazy" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="section" id="fund-partners">
+          <div className="container">
+            <div className="align-center relative">
+              <div className="mw-640 auto">
+                <h2 className="subheading">equipment partners</h2>
+                <svg width="10" height="10" fill="currentColor" viewBox="0 0 10 10" className="bullet auto"><path d="M5 10L0 5L5 0L10 5L5 10Z" /></svg>
+                <p className="paragraph">With select partners we co-develop bespoke lines and provide full commercial catalogues.</p>
+              </div>
+              <div className="right-button">
+                <a href="#" className="button">
+                  <div>View our partners</div>
+                  <svg width="33" height="16" viewBox="0 0 33 16" fill="currentColor"><path d="M25.9883 7.30838C24.1215 5.30618 22.5783 2.8282 22.4814 2.76804e-07C25.3984 3.37666 28.7622 6.42292 33 8.00002C28.7622 9.57711 25.3983 12.6233 22.4813 16C22.5782 13.1718 24.1214 10.6938 25.9883 8.69162L17.6667 8.69382C17.2793 8.69382 16.0707 9.0066 15.637 9.14096C12.6144 10.0749 10.7938 12.6167 9.41785 15.315L8.05784e-09 15.315C1.0545 11.2335 4.22469 8.85464 8.25337 8.0683C4.37879 7.47358 0.601084 4.76873 8.52011e-05 0.68943L9.41794 0.68943C10.7939 3.38767 12.6145 5.92953 15.6371 6.86345C16.0708 6.99781 17.2794 7.31059 17.6668 7.31059L25.9883 7.30838Z" /></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div className="container" style={{ marginTop: "var(--m-medium)" }}>
+            <div className="accordion-group">
+              {[
+                { name: "ROGUE FITNESS", region: "North America", detail: "Strength & conditioning" },
+                { name: "TECHNOGYM", region: "Europe", detail: "Cardio & wellness" },
+                { name: "LIFE FITNESS", region: "Global", detail: "Commercial fitness" },
+              ].map(({ name, region, detail }) => (
+                <div className="line-item" key={name}>
+                  <div className="line-title">
+                    <h3 className="heading">{name}</h3>
+                  </div>
+                  <div className="line-details">
+                    <div className="line-details-column align-left">
+                      <div className="cite">{region}</div>
+                    </div>
+                    <div className="line-details-logo">
+                    </div>
+                    <div className="line-details-column align-right">
+                      <div className="cite">{detail}</div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
-          </ScrollReveal>
+          </div>
         </div>
-      </section>
+      </div>
 
-      {/* ─── FINAL QUOTE (cream bg, small centered like Celeres) ────────── */}
-      <section className="px-6 md:px-16 py-20 md:py-28">
-        <div className="max-w-3xl mx-auto text-center">
-          <ScrollReveal>
-            <p
-              className="font-display italic font-light leading-relaxed text-[#8C8272] mb-6"
-              style={{ fontSize: "clamp(0.8rem, 1.2vw, 0.95rem)", fontFamily: "var(--font-cormorant), Georgia, serif" }}
-            >
-              &ldquo;B2B Powerhouse has been a reliable partner through every phase of our growth — from initial procurement to nationwide scaling. Their practical approach and collaborative mindset have made them more than just a supplier.&rdquo;
-            </p>
-            <p className="text-[10px] tracking-[0.2em] uppercase text-[#8C8272]">
-              Marcus Reid, Iron Architecture Studios
-            </p>
-          </ScrollReveal>
-        </div>
-      </section>
-
-    </div>
+      <TestimonialSlider />
+    </>
   );
 }

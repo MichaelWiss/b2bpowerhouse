@@ -81,12 +81,13 @@ export default function TextReveal({
   }, [stagger, duration, delay]);
 
   // TypeScript workaround: render a div with ref, apply desired tag via style
+  const Component = Tag as "div";
   return (
-    <Tag
-      ref={ref as React.Ref<never>}
+    <Component
+      ref={ref}
       className={`overflow-hidden ${className}`}
     >
       {children}
-    </Tag>
+    </Component>
   );
 }
