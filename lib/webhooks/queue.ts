@@ -2,7 +2,7 @@
 // Job queue — pg-boss backed (uses existing Postgres, no extra service)
 // ---------------------------------------------------------------------------
 
-import PgBoss from "pg-boss";
+import { PgBoss } from "pg-boss";
 
 let boss: PgBoss | null = null;
 
