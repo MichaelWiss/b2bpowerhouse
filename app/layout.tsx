@@ -4,7 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SmoothScroll from "@/components/animation/SmoothScroll";
 import PageTransition from "@/components/animation/PageTransition";
-import CeleresAnimations from "@/components/animation/CeleresAnimations";
+import B2BAnimations from "@/components/animation/B2BAnimations";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -35,7 +35,7 @@ export default function RootLayout({
             <div className="ring" />
           </div>
         </div>
-        <CeleresAnimations />
+        <B2BAnimations />
         <Header />
         <main id="main">{children}</main>
         <Footer />

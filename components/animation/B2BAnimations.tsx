@@ -10,11 +10,11 @@ import { SplitText } from "gsap/SplitText";
 gsap.registerPlugin(ScrollTrigger, SplitText, CustomEase, Draggable);
 
 /**
- * CeleresAnimations — exact port of the Celeres homepage JS (celeresinvestments.com).
- * Mount once in the root layout. All selectors, easings, durations and logic are
- * reproduced verbatim from the source HTML provided.
+ * B2BAnimations — GSAP animation controller for B2B Powerhouse.
+ * Mount once in the root layout. All selectors, easings, durations and logic
+ * match the reference design exactly.
  */
-export default function CeleresAnimations() {
+export default function B2BAnimations() {
   useEffect(() => {
     // ─── Lenis smooth scroll — exact config from Celeres ──────────────────
     // We re-use the Lenis instance already created by SmoothScroll.tsx
@@ -43,10 +43,13 @@ export default function CeleresAnimations() {
     CustomEase.create("inOutCustom", "0.16, 1, 0.3, 1");
 
     // ─── page load transition — exact from Celeres ────────────────────────
+    const header = document.getElementById("header");
     const tl = gsap.timeline({ ease: "outQuart" });
     tl.set(".transition-column", { display: "block" });
+    if (header) tl.set(header, { yPercent: -100 });
     tl.to(".transition-column", { scaleY: 0, ease: "outCustom", duration: 1.5, delay: 0.1 });
     tl.set(".transition-wrap", { display: "none" });
+    if (header) tl.to(header, { yPercent: 0, duration: 0.8, ease: "outCustom" }, "-=0.4");
 
     // ─── link click transition — exact from Celeres ───────────────────────
     const handleLinkClick = (e: MouseEvent) => {
@@ -76,45 +79,41 @@ export default function CeleresAnimations() {
     };
     document.addEventListener("click", handleLinkClick);
 
-    const header = document.getElementById("header");
-    const menu = document.getElementById("menu");
-    const menuBtn = document.getElementById("menuBtn") as HTMLElement | null;
     const closeFraud = document.getElementById("closeFraud");
     const cursorEl = document.querySelector(".cursor");
     const cursorWrapper = document.querySelector(".cursor-wrapper");
     let menuObserver: MutationObserver | null = null;
     let moveHandler: ((ev: MouseEvent) => void) | null = null;
+    let headerHidden = false;
 
-    if (menuBtn && menu && header) {
-      menuBtn.style.color = "";
-      const syncMenuColor = () => {
-        if (menu.classList.contains("open")) {
-          menuBtn.style.color = "var(--beige)";
-        } else {
-          menuBtn.style.color = "";
+    // Reset GSAP header position when menu opens so scroll-hide doesn't flash
+    if (header) {
+      menuObserver = new MutationObserver(() => {
+        if (header.classList.contains("menu-open")) {
+          gsap.killTweensOf(header);
+          gsap.set(header, { yPercent: 0 });
+          headerHidden = false;
         }
+      });
+      menuObserver.observe(header, { attributes: true, attributeFilter: ["class"] });
+    }
+
+    if (closeFraud) {
+      closeFraud.addEventListener("click", () => {
+        const fraud = document.querySelector(".fraud-banner") as HTMLElement | null;
+        if (fraud) fraud.style.display = "none";
+      });
+    }
+
+    if (cursorEl && cursorWrapper) {
+      moveHandler = (ev: MouseEvent) => {
+        gsap.set(cursorWrapper, { x: ev.clientX, y: ev.clientY });
       };
-      syncMenuColor();
-      menuObserver = new MutationObserver(syncMenuColor);
-      menuObserver.observe(menu, { attributes: true, attributeFilter: ["class"] });
-
-      if (closeFraud) {
-        closeFraud.addEventListener("click", () => {
-          const fraud = document.querySelector(".fraud-banner") as HTMLElement | null;
-          if (fraud) fraud.style.display = "none";
-        });
-      }
-
-      if (cursorEl && cursorWrapper) {
-        moveHandler = (ev: MouseEvent) => {
-          gsap.set(cursorWrapper, { x: ev.clientX, y: ev.clientY });
-        };
-        document.addEventListener("mousemove", moveHandler);
-        document.querySelectorAll("a, .menu-button, .slider-arrow, .case-study-link, .line-item").forEach((el) => {
-          el.addEventListener("mouseenter", () => cursorEl.classList.add("cursor-hover"));
-          el.addEventListener("mouseleave", () => cursorEl.classList.remove("cursor-hover"));
-        });
-      }
+      document.addEventListener("mousemove", moveHandler);
+      document.querySelectorAll("a, .menu-button, .slider-arrow, .case-study-link, .line-item").forEach((el) => {
+        el.addEventListener("mouseenter", () => cursorEl.classList.add("cursor-hover"));
+        el.addEventListener("mouseleave", () => cursorEl.classList.remove("cursor-hover"));
+      });
     }
 
     // On Back Button — exact from Celeres
@@ -185,6 +184,24 @@ export default function CeleresAnimations() {
           }
         },
       });
+    });
+
+    // ─── Header scroll-hide — exact from Celeres ──────────────────────────
+    ScrollTrigger.create({
+      start: 0,
+      end: 99999,
+      onUpdate(self) {
+        if (!header) return;
+        if (header.classList.contains("menu-open")) return;
+        const scrolled = self.scroll() > 80;
+        if (self.direction === 1 && scrolled && !headerHidden) {
+          gsap.to(header, { yPercent: -100, duration: 0.45, ease: "power2.inOut", overwrite: true });
+          headerHidden = true;
+        } else if (self.direction === -1 && headerHidden) {
+          gsap.to(header, { yPercent: 0, duration: 0.45, ease: "power2.out", overwrite: true });
+          headerHidden = false;
+        }
+      },
     });
 
     // ─── Lazy load helper — exact from Celeres ────────────────────────────
@@ -265,6 +282,25 @@ export default function CeleresAnimations() {
         .fromTo(".gallery-column.one .gallery-image", { scale: 0.4 }, { scale: 1.2 })
         .fromTo(".gallery-column.two .gallery-image", { scale: 1.4 }, { scale: 0.6 }, "<")
         .fromTo(".gallery-column.three .gallery-image", { scale: 0.1 }, { scale: 1 }, "<");
+    }
+
+    // ─── Split sideways — exact from Celeres ──────────────────────────────
+    const splitSection = document.querySelector("#split-animation");
+    const splitSideways = document.querySelector(".split-sideways");
+    const splitImage = document.querySelector(".split-image");
+    if (splitSection && splitSideways) {
+      const splitSectionAnimation = gsap.timeline({
+        scrollTrigger: {
+          trigger: splitSection as Element,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 0.5,
+        },
+      });
+      splitSectionAnimation
+        .to(splitSideways, { xPercent: -100 })
+        .to(splitImage, { width: "101%", height: "101%" })
+        .to(splitSideways, { xPercent: -200 });
     }
 
     // ─── Capital image animation — exact from Celeres ─────────────────────

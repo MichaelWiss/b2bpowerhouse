@@ -100,33 +100,31 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="split-background bg-moss">
-                <img src="https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1200&h=800&fit=crop&q=80" loading="lazy" alt="" className="split-image" />
-              </div>
+                <div className="split-background bg-moss">
+                  <img src="https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1200&h=800&fit=crop&q=80" loading="lazy" alt="" className="split-image" />
+                </div>
 
-              <div className="split-background bg-burgundy-sec">
-                <div className="testimonial" data-animate="">
-                  <div className="animated-icon">
-                    <svg width="78" height="78" viewBox="0 0 78 78" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ stroke: "currentColor" }}>
-                      <path className="big-ring" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" strokeWidth="3" fill="none" />
-                      <path className="ring-one" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" strokeWidth="1" fill="none" />
-                      <path className="ring-two" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" strokeWidth="1" fill="none" />
-                      <path className="rotate-left" d="M44 39L39 34L34 39L39 44L44 39Z" fill="currentColor" stroke="none" />
-                    </svg>
+                <div className="split-background bg-burgundy-sec">
+                  <div className="testimonial" data-animate="">
+                    <div className="animated-icon">
+                      <svg width="78" height="78" viewBox="0 0 78 78" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ stroke: "currentColor" }}>
+                        <path className="big-ring" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" strokeWidth="3" fill="none" />
+                        <path className="ring-one" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" strokeWidth="1" fill="none" />
+                        <path className="ring-two" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" strokeWidth="1" fill="none" />
+                        <path className="rotate-left" d="M44 39L39 34L34 39L39 44L44 39Z" fill="currentColor" stroke="none" />
+                      </svg>
+                    </div>
+                    <blockquote className="subtitle">
+                      &ldquo;We supply directly to operators who have demonstrated real commitment to quality.&rdquo;
+                    </blockquote>
+                    <cite className="cite">B2B Powerhouse</cite>
                   </div>
-                  <blockquote className="subtitle">
-                    &ldquo;We supply directly to operators who have demonstrated real commitment to quality.&rdquo;
-                  </blockquote>
-                  <cite className="cite">B2B Powerhouse</cite>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="split-section">
           <div className="split-column">
             <div className="split-content left">
               <div className="split-content-heading">

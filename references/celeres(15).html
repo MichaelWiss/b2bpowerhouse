@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Celeres</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&display=swap" rel="stylesheet">
+
+<!-- GSAP Suite via cdnjs (reliable, no domain restrictions) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/CustomEase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Draggable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/InertiaPlugin.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
+<!-- SplitText is now free (GSAP 3.12+) -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/SplitText.min.js"></script>
+<script>gsap.registerPlugin(ScrollTrigger, CustomEase, Draggable, InertiaPlugin, ScrollToPlugin); try { gsap.registerPlugin(SplitText); } catch(e) {}</script>
+
+<!-- Lenis smooth scroll -->
+<script src="https://unpkg.com/lenis@1.3.4/dist/lenis.min.js"></script>
+
+<!-- jQuery via official CDN -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+<style>
+/* ── RESET ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 16px; }
+
+:root {
+  --beige: #EAE4DC;
+  --burgundy: #3D0B18;
+  --ruby: #C0392B;
+  --ruby-light: #E05545;
+  --white: #FDFAF6;
+  --text: #1A1814;
+  --mid: #6a6460;
+  --rule: rgba(26,24,20,0.15);
+  --horizontal: clamp(20px, calc(1.5rem + 3.7vw), 80px);
+  --vertical: clamp(80px, 8vw, 128px);
+  --m-large: clamp(48px, 5vw, 80px);
+  --m-medium: clamp(24px, 3vw, 48px);
+  --m-small: clamp(16px, 2vw, 32px);
+}
+
+body {
+  background: var(--beige);
+  color: var(--text);
+  font-family: 'Cormorant Garamond', serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  cursor: none;
+}
+
+/* ── LENIS ── */
+html.lenis { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+/* ── PAGE TRANSITION ── */
+.transition-wrap { display: flex; position: fixed; inset: 0; z-index: 9999; pointer-events: none; }
+.transition-column {
+  flex: 1; background: var(--burgundy);
+  transform-origin: bottom; transform: scaleY(0); display: none;
+}
+
+/* ── CUSTOM CURSOR ── */
+.cursor-wrapper {
+  pointer-events: none; position: fixed; top: 0; left: 0;
+  z-index: 9000; mix-blend-mode: normal;
+  transform: translate(50vw, 50vh);
+}
+.cursor {
+  width: 36px; height: 36px; position: fixed;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+}
+.cursor .ring {
+  border: 1px solid var(--ruby);
+  border-radius: 100%; position: absolute;
+  inset: 0;
+  transition: transform 0.3s cubic-bezier(.215,.61,.355,1);
+}
+.cursor .ring:first-child { top: 0; }
+.cursor .ring:last-child { top: 0; }
+.cursor-hover .ring:first-child { transform: translate(3px,-3px) scale(1.4); }
+.cursor-hover .ring:last-child  { transform: translate(-3px,3px) scale(1.4); }
+
+/* ── HEADER ── */
+.header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+  color: var(--text);
+  /* transform is what scroll-hide uses; color changes on section bg */
+  transition: color 0.4s ease, transform 0.6s cubic-bezier(0.16,1,0.3,1);
+  will-change: transform;
+}
+
+/* Scrolled into burgundy section → text turns white, rule fades */
+.header.bg-burgundy { color: var(--white); }
+.header.bg-burgundy .header-wrap { box-shadow: inset 0 -1px rgba(255,255,255,0.1); }
+
+/* Menu open: snap to beige, FORCE transform back to visible (overrides scroll-hide),
+   zero delay so it's instant                                                         */
+.header.menu-open {
+  color: var(--beige);
+  transform: translateY(0) !important;
+  transition-delay: 0s;
+}
+.header.menu-open .header-wrap { box-shadow: inset 0 -1px transparent; transition-delay: 0s; }
+
+.header-wrap {
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 var(--horizontal);
+  height: 64px;
+  box-shadow: inset 0 -1px var(--rule);
+  position: relative;
+  transition: box-shadow 0.3s;
+}
+
+.header-home {
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; color: inherit;
+}
+.header-home svg { width: 105px; height: auto; display: block; fill: currentColor; }
+
+/* ── MENU ICON LINES ── */
+.menu-icon { display: flex; flex-direction: column; gap: 6px; }
+
+.menu-line {
+  width: 28px; height: 1.5px;
+  background: currentColor;
+  display: block;
+  transition: transform 0.45s cubic-bezier(0.16,1,0.3,1),
+              opacity  0.3s ease,
+              width    0.3s ease;
+  transform-origin: center;
+}
+
+/* Line 3 is the hidden close helper — not used, matches source */
+.menu-line.close { display: none; }
+
+/* When menu open: lines 1 & 4 rotate into X, line 2 collapses */
+.header.menu-open .menu-line:nth-child(1) { transform: translateY(7.5px)  rotate(45deg); }
+.header.menu-open .menu-line:nth-child(2) { opacity: 0; width: 0; }
+.header.menu-open .menu-line:nth-child(4) { transform: translateY(-7.5px) rotate(-45deg); }
+
+.header-line { height: 0; }
+
+/* ── FULLSCREEN MENU — fixed overlay, sibling to .header ── */
+.menu {
+  position: fixed; inset: 0;
+  z-index: 600;   /* above header (500) so it covers everything */
+  background: var(--burgundy);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.menu.open { opacity: 1; pointer-events: all; }
+
+/* Menu button must sit ABOVE the menu overlay */
+.menu-button {
+  position: absolute;
+  right: var(--horizontal); top: 50%;
+  transform: translateY(-50%);
+  cursor: none;
+  z-index: 700;   /* above menu (600) */
+}
+
+/* When menu is open, raise the header above the menu so the button is clickable */
+.header.menu-open {
+  z-index: 700;
+}
+
+.menu-section {
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+  margin-bottom: 48px;
+}
+
+.menu-link {
+  text-decoration: none; color: var(--ruby-light);
+  display: flex; align-items: center; gap: 16px;
+  padding: 8px 0;
+  overflow: hidden;
+}
+
+.menu-link .heading {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(52px, 9vw, 120px);
+  font-weight: 400; letter-spacing: 0.02em;
+  text-transform: uppercase; line-height: 1.05;
+  transition: color 0.2s;
+}
+.menu-link:hover .heading { color: var(--white); }
+
+.menu-link .menu-arrow {
+  opacity: 0; transform: translateX(-12px);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  flex-shrink: 0;
+}
+.menu-link:hover .menu-arrow { transform: translateX(0); opacity: 1; }
+.menu-link .menu-arrow svg { fill: var(--white); width: 28px; }
+
+.menu-footer-links {
+  display: flex; gap: 32px; list-style: none;
+  margin-top: 8px;
+}
+.menu-footer-links a {
+  font-size: 15px; color: rgba(224,85,69,0.55);
+  text-decoration: none; transition: color 0.2s;
+  font-family: 'Cormorant Garamond', serif;
+  letter-spacing: 0.06em;
+}
+.menu-footer-links a:hover { color: rgba(255,255,255,0.7); }
+
+/* stagger in */
+.menu.open .menu-link {
+  animation: menuIn 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
+  opacity: 0;
+}
+.menu.open .menu-link:nth-child(1) { animation-delay: 0.05s; }
+.menu.open .menu-link:nth-child(2) { animation-delay: 0.12s; }
+.menu.open .menu-link:nth-child(3) { animation-delay: 0.19s; }
+.menu.open .menu-link:nth-child(4) { animation-delay: 0.26s; }
+.menu.open .menu-footer-links { animation: menuIn 0.5s ease 0.33s forwards; opacity: 0; }
+
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── INTRO TRACK (scroll-pinned hero) ── */
+.intro-track {
+  position: relative;
+  height: 300vh; /* tall enough to scroll through the animation */
+}
+
+.intro {
+  position: sticky; top: 0;
+  height: 100vh; overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+/* Intro wrapper — full viewport, clips the growing video */
+.intro-video {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Video file — starts small + centered via margin:auto.
+   GSAP load: opacity 0→1, scale 0.8→1
+   GSAP scroll: width/height 50%/60% → 100%/100%            */
+.intro-video-file {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 50%;
+  height: 60%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Tagline sits above the video initially */
+.intro-tagline {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  pointer-events: none;
+  padding: 0 var(--horizontal);
+}
+
+.tagline {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(56px, 11vw, 168px);
+  font-weight: 400; line-height: 0.9;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--text);
+  display: block;
+}
+.tagline em { font-style: italic; }
+
+.split-line { overflow: hidden; display: block; }
+.split-word { display: inline-block; }
+
+/* Sub-content — below video, hidden until video is large */
+.intro-content {
+  position: absolute;
+  bottom: clamp(32px, 5vh, 64px);
+  left: 0; right: 0;
+  z-index: 3;
+  padding: 0 var(--horizontal);
+}
+.intro-columns {
+  display: flex; justify-content: space-between; align-items: flex-end;
+}
+.intro-subtitle { overflow: hidden; }
+.subtagline {
+  font-size: clamp(9px, 1.1vw, 14px);
+  letter-spacing: 0.28em; text-transform: uppercase;
+  font-weight: 400; color: var(--ruby);
+  display: block;
+}
+.intro-arrow a {
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; color: var(--text);
+  text-decoration: none; transition: transform 0.3s;
+}
+.intro-arrow a:hover { transform: translateY(6px); }
+.intro-arrow svg { fill: currentColor; }
+
+/* ── GALLERY (3-column parallax) ── */
+.bg-beige { background: var(--beige); }
+.bg-burgundy-sec { background: var(--burgundy); }
+
+.gallery { overflow: hidden; padding: clamp(60px, 8vw, 120px) 0; }
+.gallery-columns {
+  display: grid;
+  grid-template-columns: 3fr 2fr 4fr;
+  gap: clamp(8px, 1.5vw, 20px);
+  align-items: end;
+  padding: 0 var(--horizontal);
+}
+.gallery-column { overflow: hidden; }
+/* col one: tall portrait */
+.gallery-column.one .gallery-image  { aspect-ratio: 3/4; }
+/* col two: shorter portrait */
+.gallery-column.two .gallery-image  { aspect-ratio: 3/5; }
+/* col three: wide landscape */
+.gallery-column.three .gallery-image { aspect-ratio: 16/10; }
+.gallery-image { width: 100%; display: block; object-fit: cover; }
+
+/* ── SPLIT SECTION ── */
+/* #about is the grid itself (not a wrapper around it) */
+.split-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.split-column { position: relative; }
+
+/* Left columns */
+.split-content.left {
+  padding: var(--vertical) var(--horizontal);
+  border-right: 1px solid var(--rule);
+}
+.split-content-heading h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(40px, 5.5vw, 80px);
+  font-weight: 400; text-transform: uppercase;
+  line-height: 1.02; letter-spacing: -0.01em;
+}
+
+/* Right animated column — 300vh so ScrollTrigger has room to scrub */
+#split-animation { height: 300vh; }
+
+/* Sticky clip — 100vh, overflow:hidden clips the sliding panels */
+.split-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Sideways track — NO explicit width (offsetWidth = column width W)
+   Children: width:100% + flex-shrink:0 → each child = W
+   xPercent:-100 = translateX(-W) = panel 2  ✓
+   xPercent:-200 = translateX(-2W) = panel 3  ✓            */
+.split-sideways {
+  display: flex;
+  height: 100%;
+  will-change: transform;
+}
+
+/* Each panel = 100% of column width */
+.split-content.right {
+  width: 100%;
+  flex-shrink: 0;
+  height: 100%;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: var(--m-large) var(--horizontal);
+}
+.split-background {
+  width: 100%;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+.split-background.bg-moss { background: #4a5a4a; }
+.split-background.bg-burgundy-sec { background: var(--burgundy); }
+
+/* Image starts small (90%), GSAP grows to 101% */
+.split-image {
+  width: 90%; height: 90%;
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: cover; display: block;
+}
+
+/* Arrow in right panel */
+.split-content-arrow { margin-bottom: var(--m-medium); }
+.split-content-arrow svg { fill: currentColor; width: 16px; }
+.split-content-paragraph { padding: var(--m-large) var(--horizontal); }
+.rich-text { font-size: clamp(14px, 1.15vw, 16px); line-height: 1.82; color: var(--text); max-width: 480px; }
+.rich-text p + p { margin-top: 1.2em; }
+
+/* Testimonial */
+.testimonial {
+  height: 100%; padding: var(--vertical) var(--horizontal);
+  text-align: center; color: var(--beige);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--m-small);
+}
+.testimonial .subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(17px, 1.8vw, 24px); font-style: italic; line-height: 1.6;
+  font-weight: 400; color: var(--beige); max-width: 600px;
+}
+.testimonial .cite { font-size: 12px; letter-spacing: 0.14em; color: rgba(234,228,220,0.45); font-style: italic; }
+
+/* Pill button */
+.button {
+  display: inline-flex; align-items: center; gap: 10px;
+  border: 1px solid var(--rule); padding: 8px 18px; border-radius: 100px;
+  font-size: 12px; letter-spacing: 0.08em; text-decoration: none; color: var(--text);
+  transition: background 0.2s, color 0.2s; font-family: 'Cormorant Garamond', serif; white-space: nowrap;
+}
+.button:hover { background: var(--text); color: var(--beige); }
+.button svg { fill: currentColor; width: 20px; }
+
+/* ── ANIMATED SVG ICON ── */
+.animated-icon { color: var(--ruby); }
+.animated-icon svg { width: 72px; height: 72px; }
+
+.big-ring, .ring-one, .ring-two { transform-origin: center; transition: transform 2.4s cubic-bezier(0.16,1,0.3,1); }
+.rotate-left, .rotate-right    { transform-origin: center; transition: transform 2.4s cubic-bezier(0.16,1,0.3,1); }
+
+.reset .rotate-left  { transform: rotate(-45deg); }
+.reset .rotate-right { transform: rotate(45deg); }
+.animating .rotate-left  { transform: rotate(0deg); }
+.animating .rotate-right { transform: rotate(0deg); }
+.animating .big-ring { transform: rotate(45deg) scaleX(0.5); }
+.animating .ring-one { transform: rotate(45deg) translateX(-21%) scaleX(0.5); }
+.animating .ring-two { transform: rotate(45deg) translateX(21%) scaleX(0.5); }
+
+/* ── STATS ── */
+.bg-burgundy-full { background: var(--burgundy); }
+.statistics { padding: 0 var(--horizontal); }
+.statistic-row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  padding: clamp(8px, 1.5vh, 20px) 0 0;
+  overflow: hidden;
+  position: relative;
+}
+/* Label sits top-right, tiny */
+.statistic-row .subtitle {
+  position: absolute; right: 0; top: clamp(8px, 1.5vh, 20px);
+  font-size: clamp(9px, 0.85vw, 12px); letter-spacing: 0.38em; text-transform: uppercase;
+  color: var(--ruby-light); font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+}
+/* Number fills left, massive */
+.statistic-number {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(80px, 14vw, 210px);
+  font-weight: 300; line-height: 0.85;
+  color: var(--white); letter-spacing: -0.03em;
+  padding-bottom: clamp(12px, 2vh, 32px);
+}
+.section { padding: var(--vertical) 0; }
+.container { padding: 0 var(--horizontal); }
+.align-center { text-align: center; }
+.relative { position: relative; }
+.mw-640 { max-width: 640px; }
+.auto { margin: 0 auto; }
+
+/* ── SECTION HEADINGS ── */
+.heading {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(32px, 4vw, 60px);
+  font-weight: 400; text-transform: uppercase; letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+.subheading {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(10px, 1.1vw, 14px);
+  letter-spacing: 0.35em; text-transform: uppercase;
+  font-weight: 400; margin-bottom: 12px;
+}
+.paragraph { font-size: clamp(15px, 1.3vw, 18px); line-height: 1.72; }
+.bullet { display: block; margin: 12px auto 20px; }
+.margin-top-medium { margin-top: var(--m-medium); }
+.margin-top-small { margin-top: var(--m-small); }
+.right-button { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
+
+/* ── BUTTON ── */
+.button {
+  display: inline-flex; align-items: center; gap: 12px;
+  border: 1px solid var(--rule); padding: 10px 20px;
+  font-size: 13px; letter-spacing: 0.1em; text-decoration: none; color: var(--text);
+  transition: background 0.2s, color 0.2s;
+  font-family: 'Cormorant Garamond', serif;
+}
+.button:hover { background: var(--text); color: var(--beige); }
+.button svg { fill: currentColor; width: 24px; }
+
+/* ── CAPITAL IMAGE ── */
+.capital-image {
+  position: relative; overflow: hidden;
+  margin: 0 auto;
+  max-width: 560px;
+  aspect-ratio: 3/4;
+}
+.capital-image-bg {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.capital-image-front {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.4);
+  width: 100%; height: 100%; object-fit: cover;
+  opacity: 0;
+}
+
+/* ── CASE STUDIES (portfolio hover) ── */
+.case-study-group { position: relative; }
+.case-studies {
+  display: flex; flex-direction: column;
+  /* In screenshot: list of large names each row with small italic descriptor */
+}
+.case-study {
+  border-bottom: 1px solid var(--rule);
+  transition: opacity 0.3s;
+}
+.case-studies:hover .case-study { opacity: 0.15; }
+.case-studies:hover .case-study:hover { opacity: 1; z-index: 10; }
+
+.case-study-link {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: clamp(12px, 1.8vh, 20px) 0;
+  text-decoration: none; color: var(--text);
+}
+.case-study-link h3 {
+  font-size: clamp(26px, 3.5vw, 52px);
+  font-weight: 400; letter-spacing: -0.01em;
+}
+.case-study-link .cite {
+  font-size: 11px; letter-spacing: 0.04em; color: var(--mid);
+  font-style: italic; text-align: right; max-width: 180px; line-height: 1.4;
+}
+
+/* Hover detail panel */
+.case-study-info-block {
+  opacity: 0; transition: opacity 0.3s 0.3s;
+  pointer-events: none;
+  display: grid; grid-template-columns: 120px 1fr;
+  gap: var(--m-small);
+  align-items: start;
+  padding: var(--m-small) 0;
+  border-top: 1px solid var(--rule);
+  position: absolute; top: 0; left: 0; right: 0;
+}
+
+/* CSS :has() hover trigger — copied from source */
+.case-study-group:has([data-trigger="harbinger-motors"]:hover)  [data-label="harbinger-motors"]  { opacity:1; transition-delay:0.4s; }
+.case-study-group:has([data-trigger="gori-ai"]:hover)           [data-label="gori-ai"]           { opacity:1; transition-delay:0.4s; }
+.case-study-group:has([data-trigger="wingstop"]:hover)          [data-label="wingstop"]          { opacity:1; transition-delay:0.4s; }
+.case-study-group:has([data-trigger="acceptto"]:hover)          [data-label="acceptto"]          { opacity:1; transition-delay:0.4s; }
+.case-study-group:has([data-trigger="jaja-finance"]:hover)      [data-label="jaja-finance"]      { opacity:1; transition-delay:0.4s; }
+.case-study-group:has([data-trigger="pagaya-technologies"]:hover) [data-label="pagaya-technologies"] { opacity:1; transition-delay:0.4s; }
+.case-study-group:has([data-trigger="obrizum-group"]:hover)     [data-label="obrizum-group"]     { opacity:1; transition-delay:0.4s; }
+.case-study-group:has([data-trigger="anyvan"]:hover)            [data-label="anyvan"]            { opacity:1; transition-delay:0.4s; }
+.case-study-group:has([data-trigger="skims"]:hover)             [data-label="skims"]             { opacity:1; transition-delay:0.4s; }
+.case-study-group:has([data-trigger="stratavision"]:hover)      [data-label="stratavision"]      { opacity:1; transition-delay:0.4s; }
+.case-study-group:has([data-trigger="phantom-ai"]:hover)        [data-label="phantom-ai"]        { opacity:1; transition-delay:0.4s; }
+.case-study-group:has([data-trigger="lifelong-labs"]:hover)     [data-label="lifelong-labs"]     { opacity:1; transition-delay:0.4s; }
+.case-study-group:has([data-trigger="studious"]:hover)          [data-label="studious"]          { opacity:1; transition-delay:0.4s; }
+
+.thumb-image { width: 120px; height: 120px; object-fit: cover; display: block; }
+.fund-detail { font-size: 13px; letter-spacing: 0.06em; color: var(--mid); font-style: italic; }
+
+/* ── CAROUSEL ── */
+.swiper { overflow: hidden; cursor: none; padding: var(--vertical) 0; }
+.carousel {
+  display: flex; gap: 16px;
+  overflow: visible;
+  padding: 0 var(--horizontal);
+  user-select: none;
+}
+.carousel-slide { flex-shrink: 0; width: clamp(280px, 32vw, 500px); }
+.carousel-image {
+  width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block;
+  filter: blur(4px); transition: filter 0.6s ease;
+}
+.carousel-slide.active .carousel-image { filter: blur(0); }
+
+/* ── FUND PARTNERS (line items) ── */
+.accordion-group {
+  display: flex; flex-direction: column;
+  border-top: 1px solid var(--rule);
+}
+.line-item {
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+  cursor: none;
+  text-align: center;
+}
+.line-title { padding: clamp(20px, 3vh, 36px) 0; transition: opacity 0.25s; }
+/* Names large centered from screenshot */
+.line-title .heading { font-size: clamp(28px, 4.5vw, 68px); text-align: center; }
+.line-details {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  opacity: 0; transition: opacity 0.25s 0.2s;
+  padding: 0 var(--horizontal);
+}
+.line-item:hover .line-title   { opacity: 0; transition-delay: 0s; }
+.line-item:hover .line-details { opacity: 1; transition-delay: 0.2s; }
+
+.line-details-column { flex: 1; }
+.line-details-column.align-left  { text-align: left; }
+.line-details-column.align-right { text-align: right; }
+.line-details-logo { display: flex; justify-content: center; }
+.line-details-logo img { max-height: 40px; max-width: 140px; object-fit: contain; }
+.fund-logo { filter: invert(0); }
+
+/* ── TESTIMONIAL SLIDER ── */
+.bg-burgundy-full { background: var(--burgundy); }
+.full-background { position: relative; overflow: hidden; }
+.testimonial-slider { padding: var(--vertical) 0; }
+.testimonial-slider .container { text-align: center; }
+/* Quote is uppercase bold coral/red from screenshot */
+.testimonial-slider .subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(14px, 1.6vw, 22px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.55;
+  color: var(--ruby-light);
+  max-width: 680px; margin: 0 auto;
+}
+.testimonial-slider .cite {
+  font-size: 12px; font-style: italic;
+  color: rgba(234,228,220,0.4); letter-spacing: 0.08em;
+  margin-top: var(--m-small);
+  display: block;
+}
+
+.slider-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  cursor: none; color: var(--ruby-light); opacity: 0.6;
+  transition: opacity 0.2s;
+  z-index: 10; padding: 20px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; letter-spacing: 0.1em;
+}
+.slider-arrow:hover { opacity: 1; }
+.slider-arrow.left  { left: var(--horizontal); }
+.slider-arrow.right { right: var(--horizontal); }
+.slider-arrow svg { fill: currentColor; width: 28px; transition: transform 0.3s; }
+
+/* ── FOOTER ── */
+.footer-burgundy { background: var(--burgundy); color: var(--beige); }
+.footer { padding: var(--m-large) 0 clamp(40px, 5vh, 64px); }
+.scroll-up {
+  display: inline-flex; color: var(--beige); opacity: 0.35;
+  transition: opacity 0.2s, transform 0.3s; text-decoration: none;
+}
+.scroll-up:hover { opacity: 0.7; transform: translateY(-6px); }
+.scroll-up svg { fill: currentColor; width: 16px; }
+
+/* Large centered CELERES wordmark */
+.footer-wordmark {
+  text-align: center;
+  padding: var(--m-large) var(--horizontal) var(--m-small);
+}
+.footer-wordmark-est {
+  display: flex; align-items: center; justify-content: center; gap: 2px;
+  font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase;
+  color: rgba(234,228,220,0.35); margin-top: 8px;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+/* Thin rule before columns */
+.footer-rule {
+  border: none; border-top: 1px solid rgba(255,255,255,0.12);
+  margin: 0 var(--horizontal);
+}
+
+.footer-wrap {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  padding: var(--m-medium) var(--horizontal) 0;
+}
+.footer-column { }
+.footer-column.align-center { text-align: center; }
+.footer-column.align-right  { text-align: right; }
+.smallprint-heading {
+  font-size: 9px; letter-spacing: 0.38em; text-transform: uppercase;
+  opacity: 0.35; font-weight: 400; font-family: 'Cormorant Garamond', serif;
+}
+.smallprint { font-size: 13px; line-height: 1.65; opacity: 0.4; margin-top: 8px; }
+.margin-top-tiny { margin-top: 8px; }
+
+/* ── FRAUD BANNER ── */
+.fraud-banner { background: var(--burgundy); }
+.fraud-background {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding: clamp(20px, 3vh, 36px) var(--horizontal);
+  display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;
+  position: relative;
+}
+.fraud-heading { font-size: 14px; letter-spacing: 0.08em; color: var(--ruby-light); text-transform: uppercase; white-space: nowrap; font-weight: 400; }
+.fraud-background .paragraph { font-size: 13px; color: rgba(234,228,220,0.5); line-height: 1.65; flex: 1; min-width: 260px; }
+.fraud-background strong { color: rgba(234,228,220,0.7); }
+.fraud-link { font-size: 12px; letter-spacing: 0.08em; color: var(--ruby-light); text-decoration: none; text-transform: uppercase; white-space: nowrap; align-self: center; transition: opacity 0.2s; }
+.fraud-link:hover { opacity: 0.7; }
+.close-banner { position: absolute; top: 50%; right: var(--horizontal); transform: translateY(-50%); cursor: none; opacity: 0.5; transition: opacity 0.2s; }
+.close-banner:hover { opacity: 1; }
+.close-banner svg { width: 22px; display: block; }
+
+/* ── INLINE SVG ARROW ── */
+.arrow { display: inline-block; }
+</style>
+</head>
+
+<body>
+
+<!-- PAGE TRANSITION -->
+<div class="transition-wrap">
+  <div class="transition-column top"></div>
+  <div class="transition-column bottom"></div>
+</div>
+
+<!-- CUSTOM CURSOR -->
+<div class="cursor-wrapper">
+  <div class="cursor">
+    <div class="ring"></div>
+    <div class="ring"></div>
+  </div>
+</div>
+
+<!-- ── HEADER ── -->
+<!-- Fullscreen menu — SIBLING to header, not inside it -->
+<!-- This way GSAP transforms on .header don't affect the menu -->
+<nav class="menu" id="menu" role="navigation">
+  <div class="menu-section">
+    <a href="#" class="menu-link" onclick="closeMenu(event,'#intro')">
+      <div class="heading">Home</div>
+      <div class="menu-arrow"><svg width="33" height="16" viewBox="0 0 33 16"><path d="M25.9883 7.30838C24.1215 5.30618 22.5783 2.8282 22.4814 2.76804e-07C25.3984 3.37666 28.7622 6.42292 33 8.00002C28.7622 9.57711 25.3983 12.6233 22.4813 16C22.5782 13.1718 24.1214 10.6938 25.9883 8.69162L17.6667 8.69382C17.2793 8.69382 16.0707 9.0066 15.637 9.14096C12.6144 10.0749 10.7938 12.6167 9.41785 15.315L8.05784e-09 15.315C1.0545 11.2335 4.22469 8.85464 8.25337 8.0683C4.37879 7.47358 0.601084 4.76873 8.52011e-05 0.68943L9.41794 0.68943C10.7939 3.38767 12.6145 5.92953 15.6371 6.86345C16.0708 6.99781 17.2794 7.31059 17.6668 7.31059L25.9883 7.30838Z"/></svg></div>
+    </a>
+    <a href="#portfolio" class="menu-link" onclick="closeMenu(event,'#portfolio')">
+      <div class="heading">Portfolio</div>
+      <div class="menu-arrow"><svg width="33" height="16" viewBox="0 0 33 16"><path d="M25.9883 7.30838C24.1215 5.30618 22.5783 2.8282 22.4814 2.76804e-07C25.3984 3.37666 28.7622 6.42292 33 8.00002C28.7622 9.57711 25.3983 12.6233 22.4813 16C22.5782 13.1718 24.1214 10.6938 25.9883 8.69162L17.6667 8.69382C17.2793 8.69382 16.0707 9.0066 15.637 9.14096C12.6144 10.0749 10.7938 12.6167 9.41785 15.315L8.05784e-09 15.315C1.0545 11.2335 4.22469 8.85464 8.25337 8.0683C4.37879 7.47358 0.601084 4.76873 8.52011e-05 0.68943L9.41794 0.68943C10.7939 3.38767 12.6145 5.92953 15.6371 6.86345C16.0708 6.99781 17.2794 7.31059 17.6668 7.31059L25.9883 7.30838Z"/></svg></div>
+    </a>
+    <a href="#fund-partners" class="menu-link" onclick="closeMenu(event,'#fund-partners')">
+      <div class="heading">Fund Partners</div>
+      <div class="menu-arrow"><svg width="33" height="16" viewBox="0 0 33 16"><path d="M25.9883 7.30838C24.1215 5.30618 22.5783 2.8282 22.4814 2.76804e-07C25.3984 3.37666 28.7622 6.42292 33 8.00002C28.7622 9.57711 25.3983 12.6233 22.4813 16C22.5782 13.1718 24.1214 10.6938 25.9883 8.69162L17.6667 8.69382C17.2793 8.69382 16.0707 9.0066 15.637 9.14096C12.6144 10.0749 10.7938 12.6167 9.41785 15.315L8.05784e-09 15.315C1.0545 11.2335 4.22469 8.85464 8.25337 8.0683C4.37879 7.47358 0.601084 4.76873 8.52011e-05 0.68943L9.41794 0.68943C10.7939 3.38767 12.6145 5.92953 15.6371 6.86345C16.0708 6.99781 17.2794 7.31059 17.6668 7.31059L25.9883 7.30838Z"/></svg></div>
+    </a>
+    <a href="#team" class="menu-link" onclick="closeMenu(event,'#team')">
+      <div class="heading">Our Team</div>
+      <div class="menu-arrow"><svg width="33" height="16" viewBox="0 0 33 16"><path d="M25.9883 7.30838C24.1215 5.30618 22.5783 2.8282 22.4814 2.76804e-07C25.3984 3.37666 28.7622 6.42292 33 8.00002C28.7622 9.57711 25.3983 12.6233 22.4813 16C22.5782 13.1718 24.1214 10.6938 25.9883 8.69162L17.6667 8.69382C17.2793 8.69382 16.0707 9.0066 15.637 9.14096C12.6144 10.0749 10.7938 12.6167 9.41785 15.315L8.05784e-09 15.315C1.0545 11.2335 4.22469 8.85464 8.25337 8.0683C4.37879 7.47358 0.601084 4.76873 8.52011e-05 0.68943L9.41794 0.68943C10.7939 3.38767 12.6145 5.92953 15.6371 6.86345C16.0708 6.99781 17.2794 7.31059 17.6668 7.31059L25.9883 7.30838Z"/></svg></div>
+    </a>
+  </div>
+  <ul class="menu-footer-links">
+    <li><a href="#">Fraud Warning</a></li>
+    <li><a href="#">Privacy</a></li>
+  </ul>
+</nav>
+
+<div class="header" id="header">
+  <div class="container">
+    <div class="header-wrap">
+      <a href="#" class="header-home" aria-label="Celeres homepage">
+        <div class="logo">
+          <!-- Real Celeres SVG logo from source -->
+          <svg width="105" height="30" viewBox="0 0 105 30" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M42.417 26.918C43.0362 26.918 43.5978 27.1525 43.835 27.5176L43.4766 27.8184C43.2733 27.5184 42.8838 27.3516 42.3975 27.3516C41.8436 27.3516 41.6116 27.542 41.6113 27.7451C41.6113 27.9677 41.7903 28.0213 42.5234 28.1084C43.3726 28.2051 43.8975 28.2995 43.8975 28.8945C43.8974 29.4895 43.2925 29.8018 42.5352 29.8018C41.8456 29.8017 41.2066 29.5161 40.9453 29.0928L41.3037 28.7617V28.7588C41.6183 29.2257 42.1268 29.3662 42.5479 29.3662C43.0508 29.3661 43.411 29.1992 43.4111 28.9502C43.4111 28.6551 43.1763 28.6305 42.3584 28.5361C41.6448 28.4539 41.1388 28.338 41.1387 27.7939C41.1387 27.2884 41.6379 26.918 42.417 26.918Z"/>
+            <path d="M62.2578 26.915C63.1676 26.915 63.8506 27.5277 63.8506 28.3574C63.8503 29.1869 63.165 29.7988 62.2578 29.7988C61.3508 29.7986 60.6663 29.1867 60.666 28.3574C60.666 27.5279 61.3482 26.9153 62.2578 26.915ZM62.2578 27.3555C61.6193 27.3557 61.1719 27.7601 61.1719 28.3574C61.1721 28.9521 61.617 29.3582 62.2578 29.3584C62.8989 29.3584 63.3425 28.9547 63.3428 28.3574C63.3428 27.7599 62.8966 27.3555 62.2578 27.3555Z"/>
+            <path d="M47.4521 27.3965H46.1914V29.7578H45.6934V27.3965H44.4307V26.9609H47.4521V27.3965Z"/>
+            <path d="M53.9033 28.3574L52.5039 29.7568L51.1045 28.3574L52.5039 26.958L53.9033 28.3574Z"/>
+            <path d="M65.7246 29.7549H65.2266V27.8271H64.2422V27.4521L64.8252 27.4209C65.1758 27.4015 65.3186 27.2686 65.3477 26.9375H65.7246V29.7549Z"/>
+            <path d="M40.2256 27.3945H38.0137V28.0957H40.0049V28.5312H38.0137V29.3174H40.2256V29.7529H37.5225V26.957H40.2256V27.3945Z"/>
+            <path d="M58.9561 26.915C59.6577 26.9151 60.1631 27.2903 60.1631 27.8418C60.163 28.3013 59.7856 28.5575 59.2363 28.8574L58.3945 29.3174H60.2285V29.7529H57.5254V29.3486L58.8789 28.5967V28.5986C59.3722 28.3231 59.6718 28.1851 59.6719 27.8467C59.6719 27.5395 59.3575 27.3408 58.9316 27.3408C58.3824 27.3408 58.012 27.653 57.9346 28.0957L57.4824 27.9697C57.6107 27.3627 58.1165 26.915 58.9561 26.915Z"/>
+            <path d="M68.0391 26.915C68.7407 26.9151 69.2461 27.2903 69.2461 27.8418C69.246 28.3013 68.8686 28.5575 68.3193 28.8574L67.4775 29.3174H69.3115V29.7529H66.6084V29.3486L67.9619 28.5967V28.5986C68.4552 28.3231 68.7548 28.1851 68.7549 27.8467C68.7549 27.5395 68.4405 27.3408 68.0146 27.3408C67.4654 27.3408 67.095 27.653 67.0176 28.0957L66.5654 27.9697C66.6937 27.3627 67.1995 26.915 68.0391 26.915Z"/>
+            <path d="M63.7178 2.34082C64.2161 2.34084 64.7411 2.47068 65.5273 2.4707C66.5509 2.4707 67.0766 2.36719 68.5986 2.36719H68.6006C72.3269 2.36719 74.3203 4.57074 74.3203 7.03809C74.3203 9.16428 73.2441 10.7634 71.3545 11.5762C72.7457 14.1474 73.8995 16.1673 75.7891 18.5547C76.498 19.4207 77.154 20.2075 78.2041 20.8389C77.8097 21.1797 77.2605 21.2061 76.8662 21.2061C75.7387 21.206 74.6885 20.6039 73.5586 19.0293C72.01 16.9296 70.9328 15.0397 69.5439 12.0498C69.1496 12.1296 68.6512 12.1543 68.0996 12.1543C67.6786 12.1543 66.8653 12.1272 66.5508 12.0498V15.0664C66.5508 15.9856 66.5779 17.1399 66.6045 18.0059C66.6311 19.5007 66.9723 20.1318 67.6279 20.8115H67.3135C66.815 20.8115 66.3162 20.6816 65.5273 20.6816C64.7387 20.6817 64.2161 20.8115 63.7178 20.8115H63.4033C64.0322 20.1561 64.269 19.4207 64.373 18.0059C64.4263 17.1399 64.4531 15.9856 64.4531 15.0664V8.08789C64.4531 7.16869 64.4263 6.01441 64.373 5.14844C64.269 3.73145 64.0321 2.99863 63.4033 2.34082H63.7178ZM68.0996 3.3877C66.8656 3.38771 66.7083 3.6494 66.6309 4.69922V4.70117C66.551 5.51393 66.5508 6.45994 66.5508 7.40332V11.0752C66.7613 11.1018 66.9458 11.1016 67.7588 11.1016C70.6719 11.1015 72.0898 9.63354 72.0898 7.29688C72.0898 4.96018 70.7249 3.3877 68.0996 3.3877Z"/>
+            <path d="M100.221 2C101.873 2 103.187 2.36754 104.525 3.07617C104.579 3.49707 104.605 3.86302 104.605 4.36133C104.605 5.07017 104.552 6.35437 104.368 7.16699C103.371 4.77949 102.374 3.20508 100.013 3.20508C98.1498 3.20521 96.8897 4.35854 96.8896 6.14355C96.8896 6.95632 97.073 7.61206 97.8086 8.37402C98.307 8.87231 98.6481 9.16048 100.327 10.3408C102.401 11.7849 103.03 12.23 103.766 13.0693C104.501 13.9353 105 15.1955 105 16.376C105 19.315 102.691 21.2041 99.2529 21.2041C97.4674 21.2041 96.2088 20.9426 94.9482 20.3379C94.6604 19.131 94.5547 17.8705 94.5547 16.874C94.5547 16.1655 94.6072 15.7707 94.6338 15.3789C95.7372 17.9769 96.6282 20.0234 99.4375 20.0234C101.472 20.0233 102.838 18.7684 102.922 17.043L102.927 16.877C102.927 15.9069 102.585 15.0911 101.93 14.4355C101.351 13.8575 100.959 13.4655 99.3574 12.3359C97.1 10.7613 96.6015 10.3429 95.8926 9.42383C95.2368 8.58444 94.9727 7.82208 94.9727 6.59082C94.9729 3.96655 97.1771 2.00018 100.221 2Z"/>
+            <path d="M10.1816 2C12.4126 2 14.2233 2.44553 15.9824 3.31152C16.0356 3.99333 16.0352 4.25477 16.0352 4.85938C16.0352 5.46411 16.0356 6.64441 15.8252 7.77148C14.6178 4.85914 13.41 3.20714 10.209 3.20703C5.58983 3.20703 2.46586 6.59118 2.46582 11.5234C2.46582 16.8766 6.4799 20.0234 10.5498 20.0234C13.8575 20.0234 15.0113 17.9503 16.2695 14.75H16.2725C16.3523 15.3014 16.376 15.7735 16.376 16.4023C16.376 17.4787 16.3233 18.6328 16.1152 19.7334C14.5134 20.6768 12.3354 21.2021 10.2109 21.2021C5.11754 21.2045 0 17.9238 0 11.5498C0.000182136 5.77845 4.64568 2.00019 10.1816 2Z"/>
+            <path d="M35.1699 2.34375C35.6683 2.34377 36.1933 2.47459 36.9795 2.47461C37.7659 2.47461 38.2647 2.34375 38.7656 2.34375H39.0801C38.4243 3.0259 38.0833 3.655 38.0566 5.15234C38.03 6.01834 38.0029 7.17258 38.0029 8.0918V15.3311L38.001 15.3291C38.001 16.2483 38.0544 17.6636 38.0811 18.1885C38.1343 19.4727 38.5792 19.7099 39.7598 19.71C40.9406 19.71 41.834 19.6831 42.543 19.5791C44.0647 19.3684 44.9046 17.8734 45.5869 15.9844C45.7176 16.5093 45.7441 17.2185 45.7441 17.5596C45.7441 18.6359 45.5338 19.7366 45.2725 20.8662C43.3561 20.7622 40.338 20.7354 36.9795 20.7354C36.1933 20.7354 35.6683 20.8154 35.1699 20.8154H34.8555C35.4846 20.1599 35.7212 19.4239 35.8252 18.0088C35.8784 17.1429 35.9053 15.9894 35.9053 15.0703V8.0918C35.9053 7.17258 35.8784 6.01834 35.8252 5.15234C35.7211 3.73487 35.4846 3.0017 34.8555 2.34375H35.1699Z"/>
+            <path d="M20.4707 2.34082C20.9691 2.34082 21.4941 2.4199 22.2803 2.41992H27.1104C28.187 2.41992 29 2.42063 30.0234 2.34082C30.1541 2.99629 30.2344 3.75817 30.2344 4.62402C30.2344 5.12232 30.2076 5.64747 30.1035 6.38281C29.4744 4.9919 28.6077 3.83742 27.1123 3.57617C26.4568 3.47223 25.8786 3.44629 24.8555 3.44629C23.6215 3.44629 23.4642 3.65638 23.3867 4.70605C23.3069 5.51883 23.3066 6.46481 23.3066 7.4082V10.7656C24.1995 10.7656 26.0364 10.7388 26.876 10.6348C28.0556 10.5042 28.8166 10.1633 29.4453 9.27246V9.58008C29.4453 10.1049 29.3653 10.3931 29.3652 11.2588C29.3652 12.1248 29.4453 12.4399 29.4453 12.9648V13.2793C28.8162 12.3867 28.0539 12.0723 26.873 11.915C26.0334 11.811 24.1699 11.7842 23.3037 11.7842V15.3252C23.3037 16.2443 23.3572 17.6595 23.3838 18.1846C23.437 19.4691 23.8827 19.7061 25.0635 19.7061C26.244 19.7061 27.1368 19.6802 27.8457 19.5762C29.3677 19.3657 30.2871 18.0008 30.8896 16.3486C30.9695 16.8735 30.9941 17.2147 30.9941 17.5557C30.9941 18.632 30.8369 19.7328 30.5732 20.8623C28.6568 20.7583 25.6388 20.7324 22.2803 20.7324C21.4941 20.7324 20.9691 20.8115 20.4707 20.8115H20.1562C20.7852 20.156 21.0219 19.4207 21.126 18.0059C21.1792 17.1399 21.2061 15.9856 21.2061 15.0664V8.08789C21.2061 7.16869 21.1792 6.01441 21.126 5.14844C21.0219 3.73141 20.7851 2.99864 20.1562 2.34082H20.4707Z"/>
+            <path d="M49.0225 2.34082C49.5209 2.34082 50.0466 2.41992 50.833 2.41992H55.6621C56.7389 2.41992 57.5526 2.42065 58.5762 2.34082C58.7068 2.99627 58.7861 3.75822 58.7861 4.62402C58.7861 5.12232 58.7593 5.64747 58.6553 6.38281C58.0262 4.99193 57.1603 3.83746 55.665 3.57617C55.0093 3.47216 54.4308 3.44629 53.4072 3.44629C52.1733 3.4463 52.0159 3.65637 51.9385 4.70605C51.8586 5.51883 51.8584 6.46481 51.8584 7.4082V10.7656C52.7513 10.7656 54.5881 10.7388 55.4277 10.6348C56.6069 10.5043 57.3685 10.1643 57.9971 9.27441V9.58008C57.9971 10.1049 57.918 10.3931 57.918 11.2588C57.918 12.1248 57.9971 12.4399 57.9971 12.9648V13.2793C57.368 12.3868 56.6063 12.0723 55.4258 11.915C54.5862 11.811 52.7228 11.7842 51.8564 11.7842V15.3252C51.8564 16.2443 51.9099 17.6595 51.9365 18.1846C51.9898 19.469 52.4345 19.706 53.6152 19.7061C54.796 19.7061 55.6895 19.6802 56.3984 19.5762C57.9202 19.3656 58.8399 18.0007 59.4424 16.3486C59.5222 16.8735 59.5459 17.2147 59.5459 17.5557C59.5459 18.632 59.3887 19.7327 59.125 20.8623C57.2087 20.7583 54.1914 20.7324 50.833 20.7324C50.0466 20.7324 49.5209 20.8115 49.0225 20.8115H48.708C49.3371 20.156 49.5747 19.4209 49.6787 18.0059C49.7319 17.1399 49.7588 15.9856 49.7588 15.0664V8.08789C49.7588 7.16869 49.7319 6.01441 49.6787 5.14844C49.5747 3.73125 49.337 2.9987 48.708 2.34082H49.0225Z"/>
+            <path d="M80.5664 2.34082C81.0648 2.34084 81.5898 2.41991 82.376 2.41992H87.2061C88.2827 2.41992 89.0957 2.42064 90.1191 2.34082C90.2498 2.99629 90.3301 3.75818 90.3301 4.62402C90.3301 5.12232 90.3033 5.64747 90.1992 6.38281C89.5701 4.9919 88.7034 3.83742 87.208 3.57617C86.5525 3.47222 85.9742 3.4463 84.9512 3.44629C83.7172 3.44629 83.5599 3.65639 83.4824 4.70605C83.4026 5.51883 83.4023 6.46481 83.4023 7.4082V10.7656C84.2951 10.7656 86.1309 10.7387 86.9707 10.6348C88.1506 10.5042 88.9122 10.1635 89.541 9.27246V9.58008C89.541 10.1049 89.461 10.3931 89.4609 11.2588C89.4609 12.1248 89.541 12.4399 89.541 12.9648V13.2793C88.9119 12.3867 88.1495 12.0723 86.9688 11.915C86.1291 11.811 84.2657 11.7842 83.3994 11.7842V15.3252C83.3994 16.2443 83.4529 17.6595 83.4795 18.1846C83.5327 19.4691 83.9784 19.7061 85.1592 19.7061C86.3397 19.706 87.2325 19.6802 87.9414 19.5762C89.4634 19.3657 90.3828 18.0008 90.9854 16.3486C91.0652 16.8735 91.0898 17.2147 91.0898 17.5557C91.0898 18.632 90.9326 19.7328 90.6689 20.8623C88.7526 20.7583 85.7345 20.7324 82.376 20.7324C81.5898 20.7324 81.0648 20.8115 80.5664 20.8115H80.252C80.8809 20.1561 81.1176 19.4207 81.2217 18.0059C81.2749 17.1399 81.3018 15.9856 81.3018 15.0664V8.08789C81.3018 7.16869 81.2749 6.01441 81.2217 5.14844C81.1176 3.73145 80.8808 2.99863 80.252 2.34082H80.5664Z"/>
+          </svg>
+        </div>
+      </a>
+      <!-- Menu button inside header-wrap — z-index 700 keeps it above the menu overlay -->
+      <div class="menu-button" id="menuBtn">
+        <div class="menu-icon">
+          <div class="menu-line"></div>
+          <div class="menu-line"></div>
+          <div class="menu-line close"></div>
+          <div class="menu-line"></div>
+        </div>
+      </div>
+    </div>
+    <div class="header-line"></div>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<main id="main">
+
+  <!-- INTRO TRACK (scroll-pinned hero) -->
+  <div class="intro-track" id="intro">
+    <div class="intro">
+      <div class="intro-video" id="introVideo">
+        <video autoplay loop muted playsinline class="intro-video-file" id="introVideoFile">
+          <source src="https://cdn.jsdelivr.net/gh/brfhartley/videos/Celeres-header-video.webm" type="video/webm">
+          <source src="https://cdn.jsdelivr.net/gh/brfhartley/videos/Celeres-header-video.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <h1 class="intro-tagline" id="introTagline">
+        <span data-split="" class="tagline">Independently <br>minded <em>&amp;</em></span>
+        <span data-split="" class="tagline">personally <br>invested</span>
+      </h1>
+
+      <div class="intro-content" id="introContent">
+        <div class="container">
+          <div class="intro-columns">
+            <div class="intro-subtitle">
+              <h2 data-split="" class="subtagline">a non–conformist investment fund</h2>
+            </div>
+            <div class="intro-arrow">
+              <a href="#about" aria-label="scroll down">
+                <svg width="16" height="33" viewBox="0 0 16 33" fill="currentColor"><path d="M8.69162 25.9883C10.6938 24.1215 13.1718 22.5783 16 22.4814C12.6233 25.3984 9.57708 28.7622 7.99998 33C6.42289 28.7622 3.37666 25.3983 0 22.4813C2.8282 22.5782 5.30618 24.1214 7.30838 25.9883L7.30618 17.6667C7.30618 17.2793 6.9934 16.0707 6.85904 15.637C5.92512 12.6144 3.38327 10.7938 0.685024 9.41786L0.685025 0C4.76653 1.0545 7.14536 4.22469 7.9317 8.25337C8.52642 4.37879 11.2313 0.601085 15.3106 8.58323e-05V9.41794C12.6123 10.7939 10.0705 12.6145 9.13655 15.6371C9.00219 16.0708 8.68941 17.2794 8.68941 17.6668L8.69162 25.9883Z"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GALLERY -->
+  <div class="bg-beige" data-header-bg="bg-beige">
+    <div class="gallery" id="gallerySection">
+      <div class="container">
+        <div class="gallery-columns">
+          <div class="gallery-column one">
+            <img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a10/6855745c501b0bd16e5f2a58_home-intro-image-2.avif" loading="lazy" alt="" class="gallery-image one">
+          </div>
+          <div class="gallery-column two">
+            <img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a10/6855745c501b0bd16e5f2a27_home-intro-image-1.avif" loading="lazy" alt="" class="gallery-image two">
+          </div>
+          <div class="gallery-column three">
+            <img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a10/6855745c501b0bd16e5f2a3f_home-intro-image-3.avif" loading="lazy" alt="" class="gallery-image three">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABOUT: #about IS the split-section grid (matches source exactly) -->
+    <div id="about" class="split-section">
+
+      <!-- Left col: heading -->
+      <div class="split-column">
+        <div class="split-content left">
+          <div class="split-content-heading">
+            <h2 class="heading">A family office unlike most</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right col: 300vh scroll track, split-sticky inside -->
+      <div id="split-animation" class="split-column">
+        <div class="split-sticky">
+          <div class="split-sideways">
+
+            <!-- Panel 1: text -->
+            <div class="split-content right">
+              <div class="split-content-paragraph">
+                <div class="split-content-arrow">
+                  <svg width="33" height="16" viewBox="0 0 33 16" fill="currentColor"><path d="M25.9883 7.30838C24.1215 5.30618 22.5783 2.8282 22.4814 2.76804e-07C25.3984 3.37666 28.7622 6.42292 33 8.00002C28.7622 9.57711 25.3983 12.6233 22.4813 16C22.5782 13.1718 24.1214 10.6938 25.9883 8.69162L17.6667 8.69382C17.2793 8.69382 16.0707 9.0066 15.637 9.14096C12.6144 10.0749 10.7938 12.6167 9.41785 15.315L8.05784e-09 15.315C1.0545 11.2335 4.22469 8.85464 8.25337 8.0683C4.37879 7.47358 0.601084 4.76873 8.52011e-05 0.68943L9.41794 0.68943C10.7939 3.38767 12.6145 5.92953 15.6371 6.86345C16.0708 6.99781 17.2794 7.31059 17.6668 7.31059L25.9883 7.30838Z"/></svg>
+                </div>
+                <div class="rich-text">
+                  <p>Since our first major investment in 2012, Celeres has done things differently. Despite being a family office, we have a hands-on investment philosophy that demonstrates our commitment to adding value beyond mere capital.</p>
+                  <p>In a competitive landscape where many investors simply provide funds, our commitment to being an active partner makes all the difference. Our team of seasoned operators and ex-private equity strategists delivers operational expertise, market insight and unwavering guidance. No matter how granular the issue, Celeres and the team are available to solve it – drawing on our deep experience in scaling businesses to successful outcomes.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel 2: photo -->
+            <div class="split-background bg-moss">
+              <img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a10/6855745c501b0bd16e5f2a42_Home-content-image.avif" loading="lazy" alt="" class="split-image">
+            </div>
+
+            <!-- Panel 3: testimonial -->
+            <div class="split-background bg-burgundy-sec">
+              <div class="testimonial" data-animate="">
+                <div class="animated-icon">
+                  <svg width="78" height="78" viewBox="0 0 78 78" fill="none" xmlns="http://www.w3.org/2000/svg" style="stroke:currentColor">
+                    <path class="big-ring" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" stroke-width="3" fill="none"/>
+                    <path class="ring-one" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" stroke-width="1" fill="none"/>
+                    <path class="ring-two" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" stroke-width="1" fill="none"/>
+                    <path class="rotate-left" d="M44 39L39 34L34 39L39 44L44 39Z" fill="currentColor" stroke="none"/>
+                  </svg>
+                </div>
+                <blockquote class="subtitle">"From the early days of bringing Wingstop to the UK, Celeres has been a straightforward and committed partner. They've supported us through every critical phase – from initial market entry to nationwide scaling – always providing clear, strategic guidance when it matters most."</blockquote>
+                <cite class="cite">Tom Grogan, Co-founder &amp; Director, Wingstop UK</cite>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Left col row 2: When we commit -->
+      <div class="split-column">
+        <div class="split-content left">
+          <div class="split-content-heading">
+            <h2 class="heading">When we commit, we commit</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right col row 2: text only -->
+      <div class="split-column">
+        <div class="split-content right">
+          <div class="split-content-paragraph">
+            <div class="split-content-arrow">
+              <svg width="16" height="33" viewBox="0 0 16 33" fill="currentColor"><path d="M8.69162 25.9883C10.6938 24.1215 13.1718 22.5783 16 22.4814C12.6233 25.3984 9.57708 28.7622 7.99998 33C6.42289 28.7622 3.37666 25.3983 0 22.4813C2.8282 22.5782 5.30618 24.1214 7.30838 25.9883L7.30618 17.6667C7.30618 17.2793 6.9934 16.0707 6.85904 15.637C5.92512 12.6144 3.38327 10.7938 0.685024 9.41786L0.685025 0C4.76653 1.0545 7.14536 4.22469 7.9317 8.25337C8.52642 4.37879 11.2313 0.601085 15.3106 8.58323e-05V9.41794C12.6123 10.7939 10.0705 12.6145 9.13655 15.6371C9.00219 16.0708 8.68941 17.2794 8.68941 17.6668L8.69162 25.9883Z"/></svg>
+            </div>
+            <div class="rich-text">
+              <p>Our investment approach at Celeres is distinct. We invest directly into businesses that have demonstrated early market traction in areas we know well and are able to add value. Additionally, we invest strategically into partner funds where we have aligned goals.</p>
+              <p>Once we're in, we are committed. Our focus is on achieving a successful outcome for every investment. When we see conviction play out, we don't hesitate to double- or even triple-down with our capital and time.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#about.split-section -->
+
+  <!-- STATS -->
+  <div class="bg-burgundy-full" data-header-bg="bg-burgundy">
+    <div class="section">
+      <div class="container">
+        <div class="statistics">
+          <div class="statistic-row" data-text-animate="">
+            <div data-split="" class="subtitle">AUM</div>
+            <div data-split="" class="statistic-number">$650m</div>
+          </div>
+          <div class="statistic-row" data-text-animate="">
+            <div data-split="" class="subtitle">Total Exits</div>
+            <div data-split="" class="statistic-number">12</div>
+          </div>
+          <div class="statistic-row" data-text-animate="">
+            <div data-split="" class="subtitle">Total Fund IRR</div>
+            <div data-split="" class="statistic-number">40%+</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- CAPITAL & CONVICTION + PORTFOLIO -->
+  <div class="bg-beige" data-header-bg="bg-beige">
+    <div class="section">
+      <div class="container align-center" data-animate="">
+        <div style="color:var(--ruby);display:inline-block;">
+          <div class="animated-icon">
+            <svg width="78" height="78" viewBox="0 0 78 78" fill="none" xmlns="http://www.w3.org/2000/svg" style="stroke:currentColor">
+              <path class="big-ring" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" stroke-width="3" fill="none"/>
+              <path class="ring-one" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" stroke-width="1" fill="none"/>
+              <path class="ring-two" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" stroke-width="1" fill="none"/>
+              <path class="rotate-left" d="M44 39L39 34L34 39L39 44L44 39Z" fill="currentColor" stroke="none"/>
+            </svg>
+          </div>
+        </div>
+        <div class="margin-top-medium">
+          <h2 class="heading">Capital <em>&amp;</em> conviction</h2>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="capital-image" id="capitalImage">
+        <img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a10/6855745c501b0bd16e5f2a57_home-capital-image-1.avif" loading="lazy" alt="" class="capital-image-bg">
+        <img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a10/6855745c501b0bd16e5f2a3d_home-capital-image-2.avif" loading="lazy" alt="" class="capital-image-front">
+      </div>
+    </div>
+
+    <!-- Portfolio -->
+    <div class="section" id="portfolio">
+      <div class="container">
+        <div class="align-center relative">
+          <div class="mw-640 auto">
+            <h2 class="subheading">our portfolio</h2>
+            <svg width="10" height="10" fill="currentColor" viewBox="0 0 10 10" class="bullet auto"><path d="M5 10L0 5L5 0L10 5L5 10Z"/></svg>
+            <p class="paragraph">We believe great companies deserve more than just a cheque. So we invest our time and capital in businesses that show early market traction and deep customer understanding.</p>
+          </div>
+          <div class="right-button">
+            <a href="#" class="button">
+              <div>View our portfolio</div>
+              <svg width="33" height="16" viewBox="0 0 33 16" fill="currentColor"><path d="M25.9883 7.30838C24.1215 5.30618 22.5783 2.8282 22.4814 2.76804e-07C25.3984 3.37666 28.7622 6.42292 33 8.00002C28.7622 9.57711 25.3983 12.6233 22.4813 16C22.5782 13.1718 24.1214 10.6938 25.9883 8.69162L17.6667 8.69382C17.2793 8.69382 16.0707 9.0066 15.637 9.14096C12.6144 10.0749 10.7938 12.6167 9.41785 15.315L8.05784e-09 15.315C1.0545 11.2335 4.22469 8.85464 8.25337 8.0683C4.37879 7.47358 0.601084 4.76873 8.52011e-05 0.68943L9.41794 0.68943C10.7939 3.38767 12.6145 5.92953 15.6371 6.86345C16.0708 6.99781 17.2794 7.31059 17.6668 7.31059L25.9883 7.30838Z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Case studies hover list -->
+      <div class="container">
+        <div class="case-study-group">
+          <div class="case-studies">
+            <div class="case-study" data-trigger="harbinger-motors"><a href="#" class="case-study-link"><h3 class="heading">Harbinger Motors</h3><div class="cite">Electric Vehicle (EV) Chassis for Commercial Fleets</div></a></div>
+            <div class="case-study" data-trigger="gori-ai"><a href="#" class="case-study-link"><h3 class="heading">Gori AI</h3><div class="cite">Cross Border Logistics</div></a></div>
+            <div class="case-study" data-trigger="wingstop"><a href="#" class="case-study-link"><h3 class="heading">Wingstop</h3><div class="cite">Chicken wing franchise</div></a></div>
+            <div class="case-study" data-trigger="acceptto"><a href="#" class="case-study-link"><h3 class="heading">Acceptto</h3><div class="cite">Identity Access Management</div></a></div>
+            <div class="case-study" data-trigger="jaja-finance"><a href="#" class="case-study-link"><h3 class="heading">Jaja Finance</h3><div class="cite">Consumer Credit Card &amp; Financial Technology</div></a></div>
+            <div class="case-study" data-trigger="pagaya-technologies"><a href="#" class="case-study-link"><h3 class="heading">Pagaya</h3><div class="cite">AI Powered Lending/Loan Origination Platform</div></a></div>
+            <div class="case-study" data-trigger="obrizum-group"><a href="#" class="case-study-link"><h3 class="heading">Obrizum Group</h3><div class="cite">Adaptive Learning</div></a></div>
+            <div class="case-study" data-trigger="anyvan"><a href="#" class="case-study-link"><h3 class="heading">AnyVan</h3><div class="cite">Logistics Technology</div></a></div>
+            <div class="case-study" data-trigger="skims"><a href="#" class="case-study-link"><h3 class="heading">SKIMS</h3><div class="cite">Retail Apparel</div></a></div>
+            <div class="case-study" data-trigger="stratavision"><a href="#" class="case-study-link"><h3 class="heading">StrataVision</h3><div class="cite">Retail Analytics</div></a></div>
+            <div class="case-study" data-trigger="phantom-ai"><a href="#" class="case-study-link"><h3 class="heading">Phantom AI</h3><div class="cite">Automotive Grade ADAS</div></a></div>
+            <div class="case-study" data-trigger="lifelong-labs"><a href="#" class="case-study-link"><h3 class="heading">Lifelong Labs</h3><div class="cite">Consumer Durables</div></a></div>
+            <div class="case-study" data-trigger="studious"><a href="#" class="case-study-link"><h3 class="heading">Studious</h3><div class="cite">Operational living real estate</div></a></div>
+          </div>
+          <!-- Hover detail panels -->
+          <div class="margin-top-medium" style="position:relative;min-height:160px;">
+            <div class="case-study-info-block" data-label="harbinger-motors"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/69949591de11fe75f348520e_Harbinger-motors-1.avif" class="thumb-image"><div><div class="fund-detail italic">Invested: 2025</div><p class="paragraph" style="margin-top:8px">Harbinger Motors is on a mission to transform the commercial vehicle industry by delivering purpose-built, medium-duty electric and hybrid vehicle platforms.</p></div></div>
+            <div class="case-study-info-block" data-label="gori-ai"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/6855745c501b0bd16e5f2aa3_Gori.avif" class="thumb-image"><div><div class="fund-detail">Invested: 2024 → Exited: 2024 &nbsp;|&nbsp; Exit valuation: $50M</div><p class="paragraph" style="margin-top:8px">Gori is one of the fastest growing cross-border logistics companies in the world.</p></div></div>
+            <div class="case-study-info-block" data-label="wingstop"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/6855745c501b0bd16e5f2a89_180225_WingStop_Hot_Honey15141.avif" class="thumb-image"><div><div class="fund-detail">Invested: 2018 → Exited: 2024 &nbsp;|&nbsp; Exit valuation: £430M</div><p class="paragraph" style="margin-top:8px">The UK-based master franchise of Wingstop, with exclusive rights across the UK and Ireland.</p></div></div>
+            <div class="case-study-info-block" data-label="acceptto"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/6855745c501b0bd16e5f2aa2_Accepetto.avif" class="thumb-image"><div><div class="fund-detail">Invested: 2018 → Exited: 2021 &nbsp;|&nbsp; Exit valuation: $650M</div><p class="paragraph" style="margin-top:8px">Acceptto is a transformative biobehavioral authentication platform.</p></div></div>
+            <div class="case-study-info-block" data-label="jaja-finance"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/6855745c501b0bd16e5f2a97_Screenshot%202025-06-01%20at%2022.05.05%201.avif" class="thumb-image"><div><div class="fund-detail">Invested: 2018 → Exited: 2021 &nbsp;|&nbsp; Exit valuation: £120M</div><p class="paragraph" style="margin-top:8px">Jaja's innovative mobile-first credit card, managed entirely through an app.</p></div></div>
+            <div class="case-study-info-block" data-label="pagaya-technologies"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/6855745c501b0bd16e5f2aa1_Pagaya.avif" class="thumb-image"><div><div class="fund-detail">Invested: 2024 → Exited: 2025 &nbsp;|&nbsp; Exit valuation: $1.5B</div><p class="paragraph" style="margin-top:8px">Pagaya is the AI network that connects more people with financial opportunity.</p></div></div>
+            <div class="case-study-info-block" data-label="obrizum-group"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/6855745c501b0bd16e5f2aa0_Obrizum.avif" class="thumb-image"><div><div class="fund-detail">Invested: 2022 &nbsp;|&nbsp; Active</div><p class="paragraph" style="margin-top:8px">Obrizum is a next-generation AI company focused on the adaptive learning market.</p></div></div>
+            <div class="case-study-info-block" data-label="anyvan"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/6855745c501b0bd16e5f2a96_women-giving-box-to-home-removals-driver%203.avif" class="thumb-image"><div><div class="fund-detail">Invested: 2012 → Exited: 2022 &nbsp;|&nbsp; Exit valuation: £250M</div><p class="paragraph" style="margin-top:8px">With over 4 million customers, AnyVan is one of the largest logistics marketplaces in Europe.</p></div></div>
+            <div class="case-study-info-block" data-label="skims"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/6855745c501b0bd16e5f2a88_-skims-june-22-story%204.avif" class="thumb-image"><div><div class="fund-detail">Invested: 2023 &nbsp;|&nbsp; Active</div><p class="paragraph" style="margin-top:8px">SKIMS creates the next generation of underwear, loungewear, shapewear, and basics.</p></div></div>
+            <div class="case-study-info-block" data-label="stratavision"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/6855745c501b0bd16e5f2a9f_Stratavision.avif" class="thumb-image"><div><div class="fund-detail">Invested: 2019 &nbsp;|&nbsp; Active</div><p class="paragraph" style="margin-top:8px">StrataVision empowers enterprises with insights from computer vision and deep learning.</p></div></div>
+            <div class="case-study-info-block" data-label="phantom-ai"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/6876451e2225fa46edf62649_Phantom%20AI.avif" class="thumb-image"><div><div class="fund-detail">Invested: 2019 &nbsp;|&nbsp; Active</div><p class="paragraph" style="margin-top:8px">Phantom AI is democratising advanced driver-assistance systems to reduce accidents.</p></div></div>
+            <div class="case-study-info-block" data-label="lifelong-labs"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/6855745c501b0bd16e5f2a87_equalstock-FceAsGLYp-E-unsplash.avif" class="thumb-image"><div><div class="fund-detail">Invested: 2023 &nbsp;|&nbsp; Active</div><p class="paragraph" style="margin-top:8px">Lifelong Labs is the e-commerce market leader in 21 consumer durable categories in India.</p></div></div>
+            <div class="case-study-info-block" data-label="studious"><div style="width:120px;height:120px;background:#ddd;flex-shrink:0"></div><div><div class="fund-detail">Invested: 2014 &nbsp;|&nbsp; Active</div><p class="paragraph" style="margin-top:8px">Studious has built over £250m in operational living real estate.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAROUSEL -->
+    <div class="swiper" id="carouselSection">
+      <div class="carousel" id="carousel">
+        <div class="carousel-slide"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a10/6855745c501b0bd16e5f2a3a_home-gallery-image-6.avif" loading="lazy" class="carousel-image"></div>
+        <div class="carousel-slide"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a10/6855745c501b0bd16e5f2a56_home-gallery-image-7.avif" loading="lazy" class="carousel-image"></div>
+        <div class="carousel-slide"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a10/6855745c501b0bd16e5f2a40_home-gallery-image-3.avif" loading="lazy" class="carousel-image"></div>
+        <div class="carousel-slide"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a10/6855745c501b0bd16e5f2a51_home-gallery-image-5.avif" loading="lazy" class="carousel-image"></div>
+        <div class="carousel-slide"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a10/6855745c501b0bd16e5f2a3e_home-gallery-image-4.avif" loading="lazy" class="carousel-image"></div>
+        <div class="carousel-slide"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a10/6855745c501b0bd16e5f2a39_home-gallery-image-1.avif" loading="lazy" class="carousel-image"></div>
+        <div class="carousel-slide"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a10/6855745c501b0bd16e5f2a3b_home-gallery-image-2.avif" loading="lazy" class="carousel-image"></div>
+      </div>
+    </div>
+
+    <!-- FUND INVESTMENTS -->
+    <div class="section" id="fund-partners">
+      <div class="container">
+        <div class="align-center relative">
+          <div class="mw-640 auto">
+            <h2 class="subheading">fund INVESTMENTS</h2>
+            <svg width="10" height="10" fill="currentColor" viewBox="0 0 10 10" class="bullet auto"><path d="M5 10L0 5L5 0L10 5L5 10Z"/></svg>
+            <p class="paragraph">With select, likeminded fund partners we co-invest in specific portfolio companies as well as investing in the fund vehicles themselves.</p>
+          </div>
+          <div class="right-button">
+            <a href="#" class="button">
+              <div>View our partners</div>
+              <svg width="33" height="16" viewBox="0 0 33 16" fill="currentColor"><path d="M25.9883 7.30838C24.1215 5.30618 22.5783 2.8282 22.4814 2.76804e-07C25.3984 3.37666 28.7622 6.42292 33 8.00002C28.7622 9.57711 25.3983 12.6233 22.4813 16C22.5782 13.1718 24.1214 10.6938 25.9883 8.69162L17.6667 8.69382C17.2793 8.69382 16.0707 9.0066 15.637 9.14096C12.6144 10.0749 10.7938 12.6167 9.41785 15.315L8.05784e-09 15.315C1.0545 11.2335 4.22469 8.85464 8.25337 8.0683C4.37879 7.47358 0.601084 4.76873 8.52011e-05 0.68943L9.41794 0.68943C10.7939 3.38767 12.6145 5.92953 15.6371 6.86345C16.0708 6.99781 17.2794 7.31059 17.6668 7.31059L25.9883 7.30838Z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="container" style="margin-top:var(--m-medium)">
+        <div class="accordion-group">
+          <div class="line-item">
+            <div class="line-title"><h3 class="heading">Tanglin Venture Partners</h3></div>
+            <div class="line-details">
+              <div class="line-details-column align-left"><div class="cite">South Asia</div></div>
+              <div class="line-details-logo"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/699499956e685dbbbe636beb_Taglin-venture-partners.svg" class="fund-logo" alt="Tanglin Venture Partners"></div>
+              <div class="line-details-column align-right"><div class="cite">Burgeoning sectors</div></div>
+            </div>
+          </div>
+          <div class="line-item">
+            <div class="line-title"><h3 class="heading">Millennium New Horizons</h3></div>
+            <div class="line-details">
+              <div class="line-details-column align-left"><div class="cite">North America</div></div>
+              <div class="line-details-logo"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/6855745c501b0bd16e5f2aa4_Millennium-new-horizons.svg" class="fund-logo" alt="Millennium New Horizons"></div>
+              <div class="line-details-column align-right"><div class="cite">Deep tech</div></div>
+            </div>
+          </div>
+          <div class="line-item">
+            <div class="line-title"><h3 class="heading">Simha Partners</h3></div>
+            <div class="line-details">
+              <div class="line-details-column align-left"><div class="cite">United States</div></div>
+              <div class="line-details-logo"><img src="https://cdn.prod.website-files.com/6855745c501b0bd16e5f2a2f/699491f4998c86aeb9e3ce0f_Simha-partners.png" class="fund-logo" alt="Simha Partners"></div>
+              <div class="line-details-column align-right"><div class="cite"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /bg-beige -->
+
+  <!-- TESTIMONIAL SLIDER -->
+  <div class="bg-burgundy-full full-background" data-header-bg="bg-burgundy" id="team">
+    <div class="testimonial-slider" style="position:relative;">
+      <div id="testimonialContainer">
+        <div class="container">
+          <div class="testimonial" data-animate="">
+            <div class="animated-icon" style="color:var(--ruby-light)">
+              <svg width="78" height="78" viewBox="0 0 78 78" fill="none" xmlns="http://www.w3.org/2000/svg" style="stroke:currentColor">
+                <path class="big-ring" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" stroke-width="3" fill="none"/>
+                <path class="ring-one" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" stroke-width="1" fill="none"/>
+                <path class="ring-two" d="M72 39C72 20.7746 57.2254 6 39 6C20.7746 6 6 20.7746 6 39C6 57.2254 20.7746 72 39 72C57.2254 72 72 57.2254 72 39Z" stroke-width="1" fill="none"/>
+                <path class="rotate-left" d="M44 39L39 34L34 39L39 44L44 39Z" fill="currentColor" stroke="none"/>
+              </svg>
+            </div>
+            <blockquote class="subtitle" id="testimonialText">"Celeres has been a valued partner throughout our Lifelong journey. Over the past two years, their consistent support has made a real difference – from backing us during a management buyback to sharing in our vision and helping us scale to millions of households. Celeres' practical approach and collaborative mindset have made them more than just investors – they're trusted partners."</blockquote>
+            <cite class="cite" id="testimonialCite">Bharat Kahlia, Co-founder &amp; CEO, Lifelong Labs</cite>          </div>
+        </div>
+      </div>
+      <div class="slider-arrow left" id="prevBtn">
+        <svg width="33" height="16" viewBox="0 0 33 16" fill="currentColor"><path d="M7.01166 7.30838C8.8785 5.30618 10.4217 2.8282 10.5186 0C7.60165 3.37666 4.23781 6.42292 0 8.00002C4.23781 9.57711 7.60173 12.6233 10.5187 16C10.4218 13.1718 8.87858 10.6938 7.01174 8.69162L15.3333 8.69382C15.7207 8.69382 16.9293 9.0066 17.363 9.14096C20.3856 10.0749 22.2062 12.6167 23.5821 15.315L33 15.315C31.9455 11.2335 28.7753 8.85464 24.7466 8.0683C28.6212 7.47358 32.3989 4.76873 32.9999 0.68943L23.5821 0.68943C22.2061 3.38767 20.3855 5.92952 17.3629 6.86345C16.9292 6.99781 15.7206 7.31059 15.3332 7.31059L7.01166 7.30838Z"/></svg>
+      </div>
+      <div class="slider-arrow right" id="nextBtn">
+        <svg width="33" height="16" viewBox="0 0 33 16" fill="currentColor"><path d="M25.9883 7.30838C24.1215 5.30618 22.5783 2.8282 22.4814 2.76804e-07C25.3984 3.37666 28.7622 6.42292 33 8.00002C28.7622 9.57711 25.3983 12.6233 22.4813 16C22.5782 13.1718 24.1214 10.6938 25.9883 8.69162L17.6667 8.69382C17.2793 8.69382 16.0707 9.0066 15.637 9.14096C12.6144 10.0749 10.7938 12.6167 9.41785 15.315L8.05784e-09 15.315C1.0545 11.2335 4.22469 8.85464 8.25337 8.0683C4.37879 7.47358 0.601084 4.76873 8.52011e-05 0.68943L9.41794 0.68943C10.7939 3.38767 12.6145 5.92953 15.6371 6.86345C16.0708 6.99781 17.2794 7.31059 17.6668 7.31059L25.9883 7.30838Z"/></svg>
+      </div>    </div>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<div class="footer-burgundy">
+  <footer class="footer">
+    <div class="container">
+      <div class="align-center">
+        <a href="#main" class="scroll-up" aria-label="scroll to top">
+          <svg width="16" height="33" viewBox="0 0 16 33" fill="currentColor"><path d="M7.30838 7.01166C5.30618 8.8785 2.8282 10.4217 0 10.5186C3.37666 7.60165 6.42292 4.23781 8.00002 0C9.57711 4.23781 12.6233 7.60173 16 10.5187C13.1718 10.4218 10.6938 8.87858 8.69162 7.01174L8.69382 15.3333C8.69382 15.7207 9.0066 16.9293 9.14096 17.363C10.0749 20.3856 12.6167 22.2062 15.315 23.5821V33C11.2335 31.9455 8.85464 28.7753 8.0683 24.7466C7.47358 28.6212 4.76873 32.3989 0.689431 32.9999L0.68943 23.5821C3.38767 22.2061 5.92953 20.3855 6.86345 17.3629C6.99781 16.9292 7.31059 15.7206 7.31059 15.3332L7.30838 7.01166Z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Large CELERES wordmark using real SVG logo -->
+    <div class="footer-wordmark">
+      <svg width="320" height="92" viewBox="0 0 105 30" fill="var(--beige)" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;width:clamp(180px,25vw,340px);height:auto;">
+        <path d="M42.417 26.918C43.0362 26.918 43.5978 27.1525 43.835 27.5176L43.4766 27.8184C43.2733 27.5184 42.8838 27.3516 42.3975 27.3516C41.8436 27.3516 41.6116 27.542 41.6113 27.7451C41.6113 27.9677 41.7903 28.0213 42.5234 28.1084C43.3726 28.2051 43.8975 28.2995 43.8975 28.8945C43.8974 29.4895 43.2925 29.8018 42.5352 29.8018C41.8456 29.8017 41.2066 29.5161 40.9453 29.0928L41.3037 28.7617V28.7588C41.6183 29.2257 42.1268 29.3662 42.5479 29.3662C43.0508 29.3661 43.411 29.1992 43.4111 28.9502C43.4111 28.6551 43.1763 28.6305 42.3584 28.5361C41.6448 28.4539 41.1388 28.338 41.1387 27.7939C41.1387 27.2884 41.6379 26.918 42.417 26.918Z"/>
+        <path d="M62.2578 26.915C63.1676 26.915 63.8506 27.5277 63.8506 28.3574C63.8503 29.1869 63.165 29.7988 62.2578 29.7988C61.3508 29.7986 60.6663 29.1867 60.666 28.3574C60.666 27.5279 61.3482 26.9153 62.2578 26.915ZM62.2578 27.3555C61.6193 27.3557 61.1719 27.7601 61.1719 28.3574C61.1721 28.9521 61.617 29.3582 62.2578 29.3584C62.8989 29.3584 63.3425 28.9547 63.3428 28.3574C63.3428 27.7599 62.8966 27.3555 62.2578 27.3555Z"/>
+        <path d="M47.4521 27.3965H46.1914V29.7578H45.6934V27.3965H44.4307V26.9609H47.4521V27.3965Z"/>
+        <path d="M53.9033 28.3574L52.5039 29.7568L51.1045 28.3574L52.5039 26.958L53.9033 28.3574Z"/>
+        <path d="M65.7246 29.7549H65.2266V27.8271H64.2422V27.4521L64.8252 27.4209C65.1758 27.4015 65.3186 27.2686 65.3477 26.9375H65.7246V29.7549Z"/>
+        <path d="M40.2256 27.3945H38.0137V28.0957H40.0049V28.5312H38.0137V29.3174H40.2256V29.7529H37.5225V26.957H40.2256V27.3945Z"/>
+        <path d="M58.9561 26.915C59.6577 26.9151 60.1631 27.2903 60.1631 27.8418C60.163 28.3013 59.7856 28.5575 59.2363 28.8574L58.3945 29.3174H60.2285V29.7529H57.5254V29.3486L58.8789 28.5967V28.5986C59.3722 28.3231 59.6718 28.1851 59.6719 27.8467C59.6719 27.5395 59.3575 27.3408 58.9316 27.3408C58.3824 27.3408 58.012 27.653 57.9346 28.0957L57.4824 27.9697C57.6107 27.3627 58.1165 26.915 58.9561 26.915Z"/>
+        <path d="M68.0391 26.915C68.7407 26.9151 69.2461 27.2903 69.2461 27.8418C69.246 28.3013 68.8686 28.5575 68.3193 28.8574L67.4775 29.3174H69.3115V29.7529H66.6084V29.3486L67.9619 28.5967V28.5986C68.4552 28.3231 68.7548 28.1851 68.7549 27.8467C68.7549 27.5395 68.4405 27.3408 68.0146 27.3408C67.4654 27.3408 67.095 27.653 67.0176 28.0957L66.5654 27.9697C66.6937 27.3627 67.1995 26.915 68.0391 26.915Z"/>
+        <path d="M63.7178 2.34082C64.2161 2.34084 64.7411 2.47068 65.5273 2.4707C66.5509 2.4707 67.0766 2.36719 68.5986 2.36719H68.6006C72.3269 2.36719 74.3203 4.57074 74.3203 7.03809C74.3203 9.16428 73.2441 10.7634 71.3545 11.5762C72.7457 14.1474 73.8995 16.1673 75.7891 18.5547C76.498 19.4207 77.154 20.2075 78.2041 20.8389C77.8097 21.1797 77.2605 21.2061 76.8662 21.2061C75.7387 21.206 74.6885 20.6039 73.5586 19.0293C72.01 16.9296 70.9328 15.0397 69.5439 12.0498C69.1496 12.1296 68.6512 12.1543 68.0996 12.1543C67.6786 12.1543 66.8653 12.1272 66.5508 12.0498V15.0664C66.5508 15.9856 66.5779 17.1399 66.6045 18.0059C66.6311 19.5007 66.9723 20.1318 67.6279 20.8115H67.3135C66.815 20.8115 66.3162 20.6816 65.5273 20.6816C64.7387 20.6817 64.2161 20.8115 63.7178 20.8115H63.4033C64.0322 20.1561 64.269 19.4207 64.373 18.0059C64.4263 17.1399 64.4531 15.9856 64.4531 15.0664V8.08789C64.4531 7.16869 64.4263 6.01441 64.373 5.14844C64.269 3.73145 64.0321 2.99863 63.4033 2.34082H63.7178ZM68.0996 3.3877C66.8656 3.38771 66.7083 3.6494 66.6309 4.69922V4.70117C66.551 5.51393 66.5508 6.45994 66.5508 7.40332V11.0752C66.7613 11.1018 66.9458 11.1016 67.7588 11.1016C70.6719 11.1015 72.0898 9.63354 72.0898 7.29688C72.0898 4.96018 70.7249 3.3877 68.0996 3.3877Z"/>
+        <path d="M100.221 2C101.873 2 103.187 2.36754 104.525 3.07617C104.579 3.49707 104.605 3.86302 104.605 4.36133C104.605 5.07017 104.552 6.35437 104.368 7.16699C103.371 4.77949 102.374 3.20508 100.013 3.20508C98.1498 3.20521 96.8897 4.35854 96.8896 6.14355C96.8896 6.95632 97.073 7.61206 97.8086 8.37402C98.307 8.87231 98.6481 9.16048 100.327 10.3408C102.401 11.7849 103.03 12.23 103.766 13.0693C104.501 13.9353 105 15.1955 105 16.376C105 19.315 102.691 21.2041 99.2529 21.2041C97.4674 21.2041 96.2088 20.9426 94.9482 20.3379C94.6604 19.131 94.5547 17.8705 94.5547 16.874C94.5547 16.1655 94.6072 15.7707 94.6338 15.3789C95.7372 17.9769 96.6282 20.0234 99.4375 20.0234C101.472 20.0233 102.838 18.7684 102.922 17.043L102.927 16.877C102.927 15.9069 102.585 15.0911 101.93 14.4355C101.351 13.8575 100.959 13.4655 99.3574 12.3359C97.1 10.7613 96.6015 10.3429 95.8926 9.42383C95.2368 8.58444 94.9727 7.82208 94.9727 6.59082C94.9729 3.96655 97.1771 2.00018 100.221 2Z"/>
+        <path d="M10.1816 2C12.4126 2 14.2233 2.44553 15.9824 3.31152C16.0356 3.99333 16.0352 4.25477 16.0352 4.85938C16.0352 5.46411 16.0356 6.64441 15.8252 7.77148C14.6178 4.85914 13.41 3.20714 10.209 3.20703C5.58983 3.20703 2.46586 6.59118 2.46582 11.5234C2.46582 16.8766 6.4799 20.0234 10.5498 20.0234C13.8575 20.0234 15.0113 17.9503 16.2695 14.75H16.2725C16.3523 15.3014 16.376 15.7735 16.376 16.4023C16.376 17.4787 16.3233 18.6328 16.1152 19.7334C14.5134 20.6768 12.3354 21.2021 10.2109 21.2021C5.11754 21.2045 0 17.9238 0 11.5498C0.000182136 5.77845 4.64568 2.00019 10.1816 2Z"/>
+        <path d="M35.1699 2.34375C35.6683 2.34377 36.1933 2.47459 36.9795 2.47461C37.7659 2.47461 38.2647 2.34375 38.7656 2.34375H39.0801C38.4243 3.0259 38.0833 3.655 38.0566 5.15234C38.03 6.01834 38.0029 7.17258 38.0029 8.0918V15.3311L38.001 15.3291C38.001 16.2483 38.0544 17.6636 38.0811 18.1885C38.1343 19.4727 38.5792 19.7099 39.7598 19.71C40.9406 19.71 41.834 19.6831 42.543 19.5791C44.0647 19.3684 44.9046 17.8734 45.5869 15.9844C45.7176 16.5093 45.7441 17.2185 45.7441 17.5596C45.7441 18.6359 45.5338 19.7366 45.2725 20.8662C43.3561 20.7622 40.338 20.7354 36.9795 20.7354C36.1933 20.7354 35.6683 20.8154 35.1699 20.8154H34.8555C35.4846 20.1599 35.7212 19.4239 35.8252 18.0088C35.8784 17.1429 35.9053 15.9894 35.9053 15.0703V8.0918C35.9053 7.17258 35.8784 6.01834 35.8252 5.15234C35.7211 3.73487 35.4846 3.0017 34.8555 2.34375H35.1699Z"/>
+        <path d="M20.4707 2.34082C20.9691 2.34082 21.4941 2.4199 22.2803 2.41992H27.1104C28.187 2.41992 29 2.42063 30.0234 2.34082C30.1541 2.99629 30.2344 3.75817 30.2344 4.62402C30.2344 5.12232 30.2076 5.64747 30.1035 6.38281C29.4744 4.9919 28.6077 3.83742 27.1123 3.57617C26.4568 3.47223 25.8786 3.44629 24.8555 3.44629C23.6215 3.44629 23.4642 3.65638 23.3867 4.70605C23.3069 5.51883 23.3066 6.46481 23.3066 7.4082V10.7656C24.1995 10.7656 26.0364 10.7388 26.876 10.6348C28.0556 10.5042 28.8166 10.1633 29.4453 9.27246V9.58008C29.4453 10.1049 29.3653 10.3931 29.3652 11.2588C29.3652 12.1248 29.4453 12.4399 29.4453 12.9648V13.2793C28.8162 12.3867 28.0539 12.0723 26.873 11.915C26.0334 11.811 24.1699 11.7842 23.3037 11.7842V15.3252C23.3037 16.2443 23.3572 17.6595 23.3838 18.1846C23.437 19.4691 23.8827 19.7061 25.0635 19.7061C26.244 19.7061 27.1368 19.6802 27.8457 19.5762C29.3677 19.3657 30.2871 18.0008 30.8896 16.3486C30.9695 16.8735 30.9941 17.2147 30.9941 17.5557C30.9941 18.632 30.8369 19.7328 30.5732 20.8623C28.6568 20.7583 25.6388 20.7324 22.2803 20.7324C21.4941 20.7324 20.9691 20.8115 20.4707 20.8115H20.1562C20.7852 20.156 21.0219 19.4207 21.126 18.0059C21.1792 17.1399 21.2061 15.9856 21.2061 15.0664V8.08789C21.2061 7.16869 21.1792 6.01441 21.126 5.14844C21.0219 3.73141 20.7851 2.99864 20.1562 2.34082H20.4707Z"/>
+        <path d="M49.0225 2.34082C49.5209 2.34082 50.0466 2.41992 50.833 2.41992H55.6621C56.7389 2.41992 57.5526 2.42065 58.5762 2.34082C58.7068 2.99627 58.7861 3.75822 58.7861 4.62402C58.7861 5.12232 58.7593 5.64747 58.6553 6.38281C58.0262 4.99193 57.1603 3.83746 55.665 3.57617C55.0093 3.47216 54.4308 3.44629 53.4072 3.44629C52.1733 3.4463 52.0159 3.65637 51.9385 4.70605C51.8586 5.51883 51.8584 6.46481 51.8584 7.4082V10.7656C52.7513 10.7656 54.5881 10.7388 55.4277 10.6348C56.6069 10.5043 57.3685 10.1643 57.9971 9.27441V9.58008C57.9971 10.1049 57.918 10.3931 57.918 11.2588C57.918 12.1248 57.9971 12.4399 57.9971 12.9648V13.2793C57.368 12.3868 56.6063 12.0723 55.4258 11.915C54.5862 11.811 52.7228 11.7842 51.8564 11.7842V15.3252C51.8564 16.2443 51.9099 17.6595 51.9365 18.1846C51.9898 19.469 52.4345 19.706 53.6152 19.7061C54.796 19.7061 55.6895 19.6802 56.3984 19.5762C57.9202 19.3656 58.8399 18.0007 59.4424 16.3486C59.5222 16.8735 59.5459 17.2147 59.5459 17.5557C59.5459 18.632 59.3887 19.7327 59.125 20.8623C57.2087 20.7583 54.1914 20.7324 50.833 20.7324C50.0466 20.7324 49.5209 20.8115 49.0225 20.8115H48.708C49.3371 20.156 49.5747 19.4209 49.6787 18.0059C49.7319 17.1399 49.7588 15.9856 49.7588 15.0664V8.08789C49.7588 7.16869 49.7319 6.01441 49.6787 5.14844C49.5747 3.73125 49.337 2.9987 48.708 2.34082H49.0225Z"/>
+        <path d="M80.5664 2.34082C81.0648 2.34084 81.5898 2.41991 82.376 2.41992H87.2061C88.2827 2.41992 89.0957 2.42064 90.1191 2.34082C90.2498 2.99629 90.3301 3.75818 90.3301 4.62402C90.3301 5.12232 90.3033 5.64747 90.1992 6.38281C89.5701 4.9919 88.7034 3.83742 87.208 3.57617C86.5525 3.47222 85.9742 3.4463 84.9512 3.44629C83.7172 3.44629 83.5599 3.65639 83.4824 4.70605C83.4026 5.51883 83.4023 6.46481 83.4023 7.4082V10.7656C84.2951 10.7656 86.1309 10.7387 86.9707 10.6348C88.1506 10.5042 88.9122 10.1635 89.541 9.27246V9.58008C89.541 10.1049 89.461 10.3931 89.4609 11.2588C89.4609 12.1248 89.541 12.4399 89.541 12.9648V13.2793C88.9119 12.3867 88.1495 12.0723 86.9688 11.915C86.1291 11.811 84.2657 11.7842 83.3994 11.7842V15.3252C83.3994 16.2443 83.4529 17.6595 83.4795 18.1846C83.5327 19.4691 83.9784 19.7061 85.1592 19.7061C86.3397 19.706 87.2325 19.6802 87.9414 19.5762C89.4634 19.3657 90.3828 18.0008 90.9854 16.3486C91.0652 16.8735 91.0898 17.2147 91.0898 17.5557C91.0898 18.632 90.9326 19.7328 90.6689 20.8623C88.7526 20.7583 85.7345 20.7324 82.376 20.7324C81.5898 20.7324 81.0648 20.8115 80.5664 20.8115H80.252C80.8809 20.1561 81.1176 19.4207 81.2217 18.0059C81.2749 17.1399 81.3018 15.9856 81.3018 15.0664V8.08789C81.3018 7.16869 81.2749 6.01441 81.2217 5.14844C81.1176 3.73145 80.8808 2.99863 80.252 2.34082H80.5664Z"/>
+      </svg>
+      <!-- EST • 2012 with diamond bullet matching screenshot -->
+      <div class="footer-wordmark-est">
+        <span>EST</span>
+        <svg width="6" height="6" viewBox="0 0 10 10" fill="currentColor" style="display:inline-block;vertical-align:middle;margin:0 4px;opacity:0.4"><path d="M5 10L0 5L5 0L10 5L5 10Z"/></svg>
+        <span>2012</span>
+      </div>
+    </div>
+
+    <hr class="footer-rule">
+
+    <div class="footer-wrap">
+      <div class="footer-column">
+        <h2 class="smallprint-heading">Guernsey</h2>
+        <div class="margin-top-tiny"><p class="smallprint">Newport House, 15 The Grange,<br>St Peter Port, Guernsey GY1 4LA</p></div>
+      </div>
+      <div class="footer-column align-center">
+        <h2 class="smallprint-heading">london</h2>
+        <div class="margin-top-tiny"><p class="smallprint">15 Upper Grosvenor Street,<br>Mayfair, London, W1K 7PJ</p></div>
+      </div>
+      <div class="footer-column align-right">
+        <h2 class="smallprint-heading">hong kong</h2>
+        <div class="margin-top-tiny"><p class="smallprint">817 Star House, 3 Salisbury Road<br>Tsimshatsui, Kowloon, Hong Kong</p></div>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- FRAUD BANNER -->
+<div class="fraud-banner">
+  <div class="fraud-background">
+    <h2 class="fraud-heading">Fraud Alert:</h2>
+    <p class="paragraph">Celeres has identified scammers impersonating our firm and requesting processing fees for loan facilities. We <strong>never charge upfront fees</strong>, <strong>do not cold-outreach</strong>, and work <strong>only by referral</strong>. Communications from domains such as <em>celeresinvestment.com</em> are not affiliated with us. Please contact us directly if in doubt.</p>
+    <a href="#" class="fraud-link">Click here for more information</a>
+    <div class="close-banner" id="closeFraud">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect width="21.9473" height="21.9482" rx="10.9737" fill="white"/><path d="M5.99097 5.99121L15.9564 15.9568" stroke="black"/><path d="M5.99097 15.957L15.9564 5.99149" stroke="black"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     JAVASCRIPT — copied faithfully from source
+════════════════════════════════════════════ -->
+<script>
+// ── SPLIT TEXT — runs after DOM ready so elements exist ──
+// (wrapped in try/catch since SplitText requires Club GSAP on older versions)
+
+// ── CUSTOM EASES ──
+CustomEase.create("outCustom",   "0.16, 1, 0.3, 1");
+CustomEase.create("inOutCustom", "0.16, 1, 0.3, 1");
+
+// ── ELEMENT REFERENCES (must be before page load animation uses them) ──
+const header  = document.getElementById('header');
+const menu    = document.getElementById('menu');
+const menuBtn = document.getElementById('menuBtn');
+let menuOpen  = false;
+
+// ── PAGE LOAD TRANSITION ──
+let tl = gsap.timeline();
+tl.set(".transition-column", { display: "block" })
+  .set(header, { yPercent: -100 })
+  .to(".transition-column", { scaleY: 0, ease: "outCustom", duration: 1.5, delay: 0.1 })
+  .set(".transition-wrap", { display: "none" })
+  .to(header, { yPercent: 0, duration: 0.8, ease: "outCustom" }, "-=0.4");
+
+// ── LENIS SMOOTH SCROLL ──
+"use strict";
+const lenis = new Lenis({
+  lerp: 0.1,
+  wheelMultiplier: 0.7,
+  infinite: false,
+  gestureOrientation: "vertical",
+  normalizeWheel: false,
+  smoothTouch: false,
+  smooth: true,
+});
+
+function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+requestAnimationFrame(raf);
+
+lenis.on('scroll', ScrollTrigger.update);
+gsap.ticker.add((time) => { lenis.raf(time * 1000) });
+gsap.ticker.lagSmoothing(0);
+
+// ── MENU ──
+function openMenu() {
+  menuOpen = true;
+  menu.classList.add('open');
+  header.classList.add('menu-open');
+  menuBtn.style.color = 'var(--beige)';
+  // Force header visible (override scroll-hide transform)
+  gsap.killTweensOf(header);
+  gsap.set(header, { yPercent: 0 });
+  lenis.stop();
+}
+
+function closeMenu(e, href) {
+  if (e) e.preventDefault();
+  menuOpen = false;
+  menu.classList.remove('open');
+  header.classList.remove('menu-open');
+  menuBtn.style.color = '';
+  lenis.start();
+  if (href) {
+    setTimeout(() => {
+      const el = document.querySelector(href);
+      if (el) lenis.scrollTo(el, { offset: -64 });
+    }, 400);
+  }
+}
+
+menuBtn.addEventListener('click', () => menuOpen ? closeMenu() : openMenu());
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && menuOpen) closeMenu(); });
+
+// ── HEADER SCROLL-HIDE / SHOW ──
+// Matches source: header slides up on scroll-down, returns on scroll-up.
+// The CSS `transform: translateY(0) !important` on .menu-open overrides this.
+let headerHidden = false;
+
+ScrollTrigger.create({
+  start: 0,
+  end: 99999,
+  onUpdate(self) {
+    if (menuOpen) return; // never hide when menu is open
+    const scrolled = self.scroll() > 80;
+    if (self.direction === 1 && scrolled && !headerHidden) {
+      // Scrolling down past threshold → slide header up
+      gsap.to(header, { yPercent: -100, duration: 0.45, ease: 'power2.inOut', overwrite: true });
+      headerHidden = true;
+    } else if (self.direction === -1 && headerHidden) {
+      // Scrolling up → slide header back down
+      gsap.to(header, { yPercent: 0, duration: 0.45, ease: 'power2.out', overwrite: true });
+      headerHidden = false;
+    }
+  }
+});
+
+// ── LINK TRANSITIONS ──
+$("a").on("click", function(e) {
+  let currentUrl = $(this).attr("href");
+  if (currentUrl && $(this).prop("hostname") === window.location.host &&
+      !currentUrl.startsWith("#") && $(this).attr("target") !== "_blank") {
+    e.preventDefault();
+    lenis.stop();
+    let tl = gsap.timeline({ onComplete: () => (window.location.href = currentUrl) });
+    tl.set(".transition-wrap", { display: "flex" })
+      .set(".transition-column.top",    { transformOrigin: "bottom" })
+      .set(".transition-column.bottom", { transformOrigin: "top" })
+      .fromTo(".transition-column", { scaleY: 0 }, { scaleY: 1, ease: "outCustom", duration: 0.6 });
+  }
+});
+
+window.onpageshow = function(event) { if (event.persisted) window.location.reload(); };
+
+// ── PAGE ANIMATIONS ──
+window.addEventListener("DOMContentLoaded", () => {
+
+  // Animated icon (concentric rings morph)
+  $("[data-animate]").each(function() {
+    $(this).addClass("reset");
+    ScrollTrigger.create({
+      trigger: $(this), start: "top bottom", end: "bottom top",
+      onLeaveBack: () => { $(this).addClass("reset"); $(this).removeClass("animating"); }
+    });
+    ScrollTrigger.create({
+      trigger: $(this), start: "top 75%",
+      onEnter: () => { $(this).removeClass("reset"); $(this).addClass("animating"); }
+    });
+  });
+
+  // Text slide up (stats numbers)
+  function createScrollTrigger(el, tl) {
+    ScrollTrigger.create({ trigger: el, start: "top bottom", onEnter: () => tl.play() });
+  }
+  $("[data-text-animate]").each(function() {
+    let tl = gsap.timeline({ paused: true });
+    tl.fromTo($(this).find(".split-word"), { yPercent: 100 }, { yPercent: 0, stagger: 0.1, duration: 1.5, ease: "outCustom" }, 0.25);
+    createScrollTrigger($(this), tl);
+  });
+
+  // Header background color switching
+  $("[data-header-bg]").each(function() {
+    let triggerEl = $(this), targetEl = $(".header");
+    let cls = triggerEl.attr("data-header-bg");
+    ScrollTrigger.create({
+      trigger: triggerEl, start: "top 61px", end: "bottom top",
+      onToggle: ({ isActive }) => {
+        if (isActive) { targetEl.addClass(cls); } else { targetEl.removeClass(cls); }
+      }
+    });
+  });
+
+  // Lazy load refresh
+  let lazyImages = gsap.utils.toArray("img[loading='lazy']");
+  let imgLoaded = lazyImages.length;
+  lazyImages.forEach(img => {
+    img.naturalWidth ? (--imgLoaded || ScrollTrigger.refresh()) :
+      img.addEventListener("load", () => --imgLoaded || ScrollTrigger.refresh());
+  });
+
+  // ── SPLIT TEXT ──
+  try {
+    SplitText.create("[data-split]", {
+      aria: "none", type: "words, lines", mask: "lines",
+      wordsClass: "split-word", linesClass: "split-line",
+    });
+  } catch(e) { /* SplitText unavailable — intro uses whole-element fallback below */ }
+
+  // ── INTRO ANIMATION ──
+  let introTrack = $(".intro-track");
+  let introVideoFrame = $(".intro-video");
+  let introVideo = $(".intro-video-file");
+  let introArrow = $(".intro-arrow");
+
+  // Use SplitText-generated elements if available, else whole taglines
+  let introTagline = $(".tagline .split-line").length
+    ? $(".tagline .split-line")
+    : $(".tagline");
+  let introTaglineWords = $(".tagline .split-word").length
+    ? $(".tagline .split-word")
+    : $(".tagline");
+  let introContent = $(".intro-content .split-line").length
+    ? $(".intro-content .split-line")
+    : $(".intro-content");
+
+  // Load-in: tagline words fly up from mask, video fades + scales
+  let loadAnimation = gsap.timeline();
+  loadAnimation
+    .set(introTaglineWords, { yPercent: 100 })
+    .set(introVideo, { opacity: 0, scale: 0.8 })
+    .to(introTaglineWords, { yPercent: 0, stagger: 0.1, duration: 1.5, ease: "outCustom" }, 0.5)
+    .to(introVideo, { opacity: 1, scale: 1, duration: 1.5, ease: "outCustom" }, "<0.5");
+
+  // Scroll: tagline slides up + video expands fullscreen
+  let introAnimation = gsap.timeline({
+    scrollTrigger: {
+      trigger: introTrack,
+      start: "top top",
+      end: "bottom bottom",
+      scrub: 1
+    }
+  });
+
+  gsap.set(introContent, { yPercent: 100 });
+  gsap.set(introArrow, { opacity: 0 });
+
+  introAnimation
+    .to(introTagline,    { yPercent: -100, duration: 1, stagger: 0.1 })
+    .to(introVideo,      { width: "100%", height: "100%", duration: 2 }, "<")
+    .to(introVideoFrame, { yPercent: -10, duration: 2 }, "<")
+    .to(introContent,    { yPercent: 0, duration: 1, stagger: 0.1 }, ">-1")
+    .to(introArrow,      { opacity: 1, duration: 1 }, "<");
+
+  // ── SPLIT SIDEWAYS (exact copy from source) ──
+  // #split-animation is the 300vh right column — the scroll track
+  // .split-sticky inside it is position:sticky height:100vh overflow:hidden
+  // .split-sideways width = column width (no explicit width set)
+  // each child width:100% flex-shrink:0 → xPercent:-100 = 1 panel, -200 = 2 panels
+  let splitSection  = $("#split-animation");
+  let splitSideways = $(".split-sideways");
+  let splitImage    = $(".split-image");
+
+  let splitSectionAnimation = gsap.timeline({
+    scrollTrigger: {
+      trigger: splitSection,
+      start: "top top",
+      end: "bottom bottom",
+      scrub: 0.5
+    }
+  });
+
+  splitSectionAnimation
+    .to(splitSideways, { xPercent: -100 })
+    .to(splitImage,    { width: "101%", height: "101%" })
+    .to(splitSideways, { xPercent: -200 });
+
+  // ── GALLERY PARALLAX ──
+  let gallery     = $(".gallery");
+  let galleryOne   = $(".gallery-column.one .gallery-image");
+  let galleryTwo   = $(".gallery-column.two .gallery-image");
+  let galleryThree = $(".gallery-column.three .gallery-image");
+
+  let galleryAnimation = gsap.timeline({
+    scrollTrigger: { trigger: gallery, start: "top bottom", end: "bottom top", scrub: 1 }
+  });
+  galleryAnimation
+    .fromTo(galleryOne,   { scale: 0.4 }, { scale: 1.2 })
+    .fromTo(galleryTwo,   { scale: 1.4 }, { scale: 0.6 }, "<")
+    .fromTo(galleryThree, { scale: 0.1 }, { scale: 1 },   "<");
+
+  // ── CAPITAL IMAGE ──
+  let capitalTrack = $(".capital-image");
+  let capitalBg    = $(".capital-image-bg");
+  let capitalPhoto = $(".capital-image-front");
+
+  let capitalAnimation = gsap.timeline({
+    scrollTrigger: { trigger: capitalTrack, start: "top center", end: "bottom 75%", scrub: 1 }
+  });
+  capitalAnimation
+    .to(capitalBg,    { filter: "blur(5px)", scale: 1.1, duration: 1, ease: "none" })
+    .to(capitalPhoto, { opacity: 1, scale: 0.4, duration: 1, ease: "none" }, "<");
+
+  // ── DRAGGABLE CAROUSEL (copied from source) ──
+  const slides = gsap.utils.toArray(".carousel-slide");
+  let activeSlide;
+
+  gsap.set(".carousel", { overflow: "visible", cursor: "none" });
+  gsap.set(".carousel-slide .carousel-image", { filter: "blur(5px)" });
+
+  const loop = horizontalLoop(slides, {
+    paused: true,
+    center: true,
+    draggable: true,
+    onChange: (slide) => {
+      if (activeSlide) {
+        gsap.to(".carousel-slide.active .carousel-image", { filter: "blur(5px)", duration: 1.5 });
+        activeSlide.classList.remove("active");
+      }
+      slide.classList.add("active");
+      activeSlide = slide;
+      gsap.to(".carousel-slide.active .carousel-image", { filter: "blur(0px)", ease: "outCustom", duration: 0.5 });
+    }
+  });
+
+  slides.forEach((slide, i) => {
+    slide.addEventListener("click", () => loop.toIndex(i, { duration: 1, ease: "expo" }));
+  });
+  loop.toIndex(0, { duration: 0 });
+
+}); // end DOMContentLoaded
+
+// ── HORIZONTAL LOOP (copied verbatim from source) ──
+function horizontalLoop(items, config) {
+  let timeline;
+  items = gsap.utils.toArray(items);
+  config = config || {};
+  gsap.context(() => {
+    let onChange = config.onChange,
+      lastIndex = 0,
+      tl = gsap.timeline({
+        repeat: config.repeat,
+        onUpdate: onChange && function() {
+          let i = tl.closestIndex();
+          if (lastIndex !== i) { lastIndex = i; onChange(items[i], i); }
+        },
+        paused: config.paused,
+        defaults: { ease: "none" },
+        onReverseComplete: () => tl.totalTime(tl.rawTime() + tl.duration() * 100)
+      }),
+      length = items.length,
+      startX = items[0].offsetLeft,
+      times = [], widths = [], spaceBefore = [], xPercents = [],
+      curIndex = 0, indexIsDirty = false,
+      center = config.center,
+      pixelsPerSecond = (config.speed || 1) * 100,
+      snap = config.snap === false ? v => v : gsap.utils.snap(config.snap || 1),
+      timeOffset = 0,
+      container = center === true ? items[0].parentNode : gsap.utils.toArray(center)[0] || items[0].parentNode,
+      totalWidth,
+      getTotalWidth = () => items[length-1].offsetLeft + xPercents[length-1] / 100 * widths[length-1] - startX + spaceBefore[0] + items[length-1].offsetWidth * gsap.getProperty(items[length-1], "scaleX") + (parseFloat(config.paddingRight) || 0),
+      populateWidths = () => {
+        let b1 = container.getBoundingClientRect(), b2;
+        items.forEach((el, i) => {
+          widths[i] = parseFloat(gsap.getProperty(el, "width", "px"));
+          xPercents[i] = snap(parseFloat(gsap.getProperty(el, "x", "px")) / widths[i] * 100 + gsap.getProperty(el, "xPercent"));
+          b2 = el.getBoundingClientRect();
+          spaceBefore[i] = b2.left - (i ? b1.right : b1.left);
+          b1 = b2;
+        });
+        gsap.set(items, { xPercent: i => xPercents[i] });
+        totalWidth = getTotalWidth();
+      },
+      timeWrap,
+      populateOffsets = () => {
+        timeOffset = center ? tl.duration() * (container.offsetWidth / 2) / totalWidth : 0;
+        center && times.forEach((t, i) => {
+          times[i] = timeWrap(tl.labels["label" + i] + tl.duration() * widths[i] / 2 / totalWidth - timeOffset);
+        });
+      },
+      getClosest = (values, value, wrap) => {
+        let i = values.length, closest = 1e10, index = 0, d;
+        while (i--) {
+          d = Math.abs(values[i] - value);
+          if (d > wrap / 2) d = wrap - d;
+          if (d < closest) { closest = d; index = i; }
+        }
+        return index;
+      },
+      populateTimeline = () => {
+        let i, item, curX, distanceToStart, distanceToLoop;
+        tl.clear();
+        for (i = 0; i < length; i++) {
+          item = items[i];
+          curX = xPercents[i] / 100 * widths[i];
+          distanceToStart = item.offsetLeft + curX - startX + spaceBefore[0];
+          distanceToLoop = distanceToStart + widths[i] * gsap.getProperty(item, "scaleX");
+          tl.to(item, { xPercent: snap((curX - distanceToLoop) / widths[i] * 100), duration: distanceToLoop / pixelsPerSecond }, 0)
+            .fromTo(item, { xPercent: snap((curX - distanceToLoop + totalWidth) / widths[i] * 100) }, { xPercent: xPercents[i], duration: (curX - distanceToLoop + totalWidth - curX) / pixelsPerSecond, immediateRender: false }, distanceToLoop / pixelsPerSecond)
+            .add("label" + i, distanceToStart / pixelsPerSecond);
+          times[i] = distanceToStart / pixelsPerSecond;
+        }
+        timeWrap = gsap.utils.wrap(0, tl.duration());
+      },
+      refresh = (deep) => {
+        let progress = tl.progress();
+        tl.progress(0, true);
+        populateWidths();
+        deep && populateTimeline();
+        populateOffsets();
+        deep && tl.draggable && tl.paused() ? tl.time(times[curIndex], true) : tl.progress(progress, true);
+      },
+      proxy;
+    gsap.set(items, { x: 0 });
+    populateWidths();
+    populateTimeline();
+    populateOffsets();
+    window.addEventListener("resize", () => refresh(true));
+    function toIndex(index, vars) {
+      vars = vars || {};
+      (Math.abs(index - curIndex) > length / 2) && (index += index > curIndex ? -length : length);
+      let newIndex = gsap.utils.wrap(0, length, index), time = times[newIndex];
+      if (time > tl.time() !== index > curIndex && index !== curIndex) time += tl.duration() * (index > curIndex ? 1 : -1);
+      if (time < 0 || time > tl.duration()) vars.modifiers = { time: timeWrap };
+      curIndex = newIndex;
+      vars.overwrite = true;
+      gsap.killTweensOf(proxy);
+      return vars.duration === 0 ? tl.time(timeWrap(time)) : tl.tweenTo(time, vars);
+    }
+    tl.toIndex = (index, vars) => toIndex(index, vars);
+    tl.closestIndex = setCurrent => {
+      let index = getClosest(times, tl.time(), tl.duration());
+      if (setCurrent) { curIndex = index; indexIsDirty = false; }
+      return index;
+    };
+    tl.current = () => indexIsDirty ? tl.closestIndex(true) : curIndex;
+    tl.next = vars => toIndex(tl.current() + 1, vars);
+    tl.previous = vars => toIndex(tl.current() - 1, vars);
+    tl.times = times;
+    tl.progress(1, true).progress(0, true);
+    if (config.reversed) { tl.vars.onReverseComplete(); tl.reverse(); }
+    if (config.draggable && typeof Draggable === "function") {
+      proxy = document.createElement("div");
+      let wrap = gsap.utils.wrap(0, 1), ratio, startProgress, draggable, lastSnap, initChangeX, wasPlaying,
+        align = () => tl.progress(wrap(startProgress + (draggable.startX - draggable.x) * ratio)),
+        syncIndex = () => tl.closestIndex(true);
+      draggable = Draggable.create(proxy, {
+        trigger: items[0].parentNode, type: "x",
+        onPressInit() {
+          let x = this.x;
+          gsap.killTweensOf(tl);
+          wasPlaying = !tl.paused(); tl.pause(); startProgress = tl.progress();
+          refresh(); ratio = 1 / totalWidth; initChangeX = (startProgress / -ratio) - x;
+          gsap.set(proxy, { x: startProgress / -ratio });
+        },
+        onDrag: align, onThrowUpdate: align, overshootTolerance: 0, inertia: true,
+        snap(value) {
+          if (Math.abs(startProgress / -ratio - this.x) < 10) return lastSnap + initChangeX;
+          let time = -(value * ratio) * tl.duration(),
+            wrappedTime = timeWrap(time),
+            snapTime = times[getClosest(times, wrappedTime, tl.duration())],
+            dif = snapTime - wrappedTime;
+          Math.abs(dif) > tl.duration() / 2 && (dif += dif < 0 ? tl.duration() : -tl.duration());
+          lastSnap = (time + dif) / tl.duration() / -ratio;
+          return lastSnap;
+        },
+        onRelease() { syncIndex(); draggable.isThrowing && (indexIsDirty = true); },
+        onThrowComplete: () => { syncIndex(); wasPlaying && tl.play(); }
+      })[0];
+      tl.draggable = draggable;
+    }
+    tl.closestIndex(true);
+    lastIndex = curIndex;
+    onChange && onChange(items[curIndex], curIndex);
+    timeline = tl;
+    return () => window.removeEventListener("resize", () => refresh(true));
+  });
+  return timeline;
+}
+
+// ── TESTIMONIAL SLIDER ──
+const testimonials = [
+  {
+    text: '"Celeres has been a valued partner throughout our Lifelong journey. Over the past two years, their consistent support has made a real difference – from backing us during a management buyback to sharing in our vision and helping us scale to millions of households. Celeres\' practical approach and collaborative mindset have made them more than just investors – they\'re trusted partners."',
+    cite: 'Bharat Kahlia, Co-founder & CEO, Lifelong Labs'
+  },
+  {
+    text: '"We are fortunate to have been working with Celeres for almost a decade, and they remain a standout investor partner. Pathiq and Rishad are consistently supportive, yet always decisive and guided by exceptional acumen."',
+    cite: 'Ray Cheng, Managing Partner, Millennium New Horizons'
+  }
+];
+let currentTestimonial = 0;
+const tText = document.getElementById('testimonialText');
+const tCite = document.getElementById('testimonialCite');
+
+function showTestimonial(i) {
+  gsap.to([tText, tCite], { opacity: 0, y: 10, duration: 0.3, onComplete: () => {
+    tText.textContent = testimonials[i].text;
+    tCite.textContent = testimonials[i].cite;
+    gsap.to([tText, tCite], { opacity: 1, y: 0, duration: 0.5, ease: "outCustom" });
+  }});
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  currentTestimonial = (currentTestimonial + 1) % testimonials.length;
+  showTestimonial(currentTestimonial);
+});
+document.getElementById('prevBtn').addEventListener('click', () => {
+  currentTestimonial = (currentTestimonial - 1 + testimonials.length) % testimonials.length;
+  showTestimonial(currentTestimonial);
+});
+
+// ── FRAUD BANNER CLOSE ──
+document.getElementById('closeFraud').addEventListener('click', () => {
+  document.querySelector('.fraud-banner').style.display = 'none';
+});
+
+// ── CUSTOM CURSOR ──
+const cursorEl = document.querySelector('.cursor');
+const cursorWrapper = document.querySelector('.cursor-wrapper');
+let mouseX = 0, mouseY = 0;
+
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  gsap.set(cursorWrapper, { x: mouseX, y: mouseY });
+});
+document.querySelectorAll('a, .menu-button, .slider-arrow, .case-study-link, .line-item').forEach(el => {
+  el.addEventListener('mouseenter', () => cursorEl.classList.add('cursor-hover'));
+  el.addEventListener('mouseleave', () => cursorEl.classList.remove('cursor-hover'));
+});
+</script>
+
+</body>
+</html>
