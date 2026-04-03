@@ -210,9 +210,89 @@ Create typed client for Shopify's Storefront API (free with any store, including
 - `lib/shopify/mutations.ts` — `cartCreate`, `cartLinesAdd`, `cartLinesUpdate`, `cartLinesRemove`
 - `lib/shopify/types.ts` — TypeScript interfaces for all Shopify responses
 
-**B2B-specific:**
-- Use `companyLocationAssign` to tie cart to a company location (enables customer-specific pricing)
-- Query B2B catalogs for price lists per company
+**B2B-specific — UPDATED:**
+
+Shopify's Storefront API returns **DTC retail prices** by default. B2B catalog pricing, volume price breaks, quantity rules, and payment terms are only activated when every request carries a `buyerIdentity` with a `companyLocationId`. This ID comes from the Customer Account API after the buyer logs in (Step 6).
+
+Two request modes:
+
+| Mode | When | How |
+|---|---|---|
+| **Unauthenticated** | Pre-login product browsing | `shopifyClient` with public access token only |
+| **Buyer-contextualized** | After login — pricing, cart, checkout | Pass `buyerIdentity: { companyLocationId, customerAccessToken }` on every request |
+
+**`lib/shopify/queries.ts` — add `buyerIdentity` + `quantityPriceBreaks`:**
+```graphql
+# Every product query must accept buyerIdentity to return B2B catalog prices
+query GetProduct($handle: String!, $buyerIdentity: BuyerIdentityInput) {
+  product(handle: $handle) {
+    variants(first: 50) {
+      edges {
+        node {
+          id
+          title
+          sku
+          price { amount currencyCode }
+          # Real volume pricing from Shopify B2B catalogs (replaces hardcoded tiers)
+          quantityPriceBreaks(first: 10) {
+            nodes {
+              minimumQuantity
+              price { amount currencyCode }
+            }
+          }
+          # Quantity rules: min order, max order, increment (case pack)
+          quantityRule {
+            minimum
+            maximum
+            increment
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+**`lib/shopify/mutations.ts` — cart must carry buyer identity:**
+```graphql
+# cartCreate must include buyerIdentity to activate B2B checkout
+mutation CartCreate($input: CartInput!) {
+  cartCreate(input: $input) {
+    cart {
+      id
+      checkoutUrl
+      buyerIdentity {
+        companyLocation { id name }
+      }
+      lines(first: 50) { ... }
+    }
+  }
+}
+
+# companyLocationAssign ties an existing cart to a company location
+mutation CompanyLocationAssign($cartId: ID!, $companyLocationId: ID!) {
+  cartBuyerIdentityUpdate(
+    cartId: $cartId
+    buyerIdentity: { companyLocationId: $companyLocationId }
+  ) {
+    cart { id checkoutUrl }
+    userErrors { field message }
+  }
+}
+```
+
+**Key mutations to implement:**
+- `cartCreate` — always include `buyerIdentity` if session has `companyLocationId`
+- `cartLinesAdd`, `cartLinesUpdate`, `cartLinesRemove` — unchanged in shape
+- `cartBuyerIdentityUpdate` — used when session is established after cart already exists
+
+**Effect chain:** setting `buyerIdentity.companyLocationId` on the cart causes Shopify to:
+1. Apply the company's assigned catalog (customer-specific pricing)
+2. Return `quantityPriceBreaks` on variants (live volume tiers, not hardcoded)
+3. Enforce `quantityRule` min/max/increment at checkout
+4. Apply the company location's payment terms (net-30/60) at checkout
+5. Route the buyer through B2B checkout instead of DTC checkout
+
 - Redirect to `checkoutUrl` from cart (Shopify hosted checkout — PCI compliant, free)
 
 ### Step 3: Sanity CMS Setup *(parallel with Step 2)*
@@ -295,11 +375,173 @@ const [product, content, stock] = await Promise.all([
 ]);
 ```
 
-### Step 6: Auth *(depends on Step 2)*
+### Step 6: Auth — Customer Account API (PKCE OAuth) *(depends on Step 2)*
 
-- Shopify Customer Account API for B2B login (free with dev store)
-- `middleware.ts` protects `/account/*` routes — redirects to login if no session
-- Store customer ID + company context in encrypted cookie
+> The Customer Account API is a **separate API** from the Storefront API. It has its own endpoint, its own OAuth flow, and its own access token. Without it, `companyLocationId` is never known and all Storefront API calls return DTC prices.
+
+**Why PKCE?** The Customer Account API uses OAuth 2.0 with PKCE (Proof Key for Code Exchange). There is no client secret stored in your app — the security comes from a one-time `codeVerifier`/`codeChallenge` pair generated per login attempt. This is the correct approach for apps that cannot safely store a client secret server-side (which Next.js Hobby on Vercel is, since env vars are visible at build time to the deployment environment).
+
+**Flow:**
+```
+1. Buyer clicks "Log In"
+   └→ GET /api/auth/login
+        → generate codeVerifier (random 64 bytes, store in httpOnly cookie)
+        → generate codeChallenge = base64url(sha256(codeVerifier))
+        → redirect to Customer Account API OAuth URL:
+             {SHOPIFY_CUSTOMER_ACCOUNT_URL}/oauth/authorize
+               ?client_id={SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID}
+               &redirect_uri={APP_URL}/api/auth/callback
+               &response_type=code
+               &code_challenge={codeChallenge}
+               &code_challenge_method=S256
+               &scope=openid+email+https://api.customers.com/auth/customer.graphql
+
+2. Shopify authenticates the buyer, redirects to:
+   GET /api/auth/callback?code={authCode}&state=...
+        → read codeVerifier from httpOnly cookie (single use, then delete)
+        → POST to Customer Account API token endpoint:
+             exchangeCode({ code, codeVerifier }) → { accessToken, idToken }
+        → Use accessToken to call Customer Account API GraphQL:
+             query { customer { companyContacts { nodes { companyLocation { id company { id name } } } } } }
+        → Extract companyLocationId + companyId + email
+        → Set httpOnly session cookie:
+             { customerId, companyId, companyLocationId, accessToken, email }
+        → Redirect to /account
+
+3. All subsequent Storefront API calls:
+        → Read companyLocationId from session cookie (server-side)
+        → Pass as buyerIdentity on every product query and cart mutation
+        → Shopify returns B2B catalog prices, volume tiers, payment terms
+```
+
+**New API routes:**
+- `app/api/auth/login/route.ts` — generate PKCE pair, redirect to Shopify OAuth
+- `app/api/auth/callback/route.ts` — exchange code, fetch company context, set session
+- `app/api/auth/logout/route.ts` — clear session cookie, redirect to `/`
+
+**Updated `lib/auth/session.ts`:**
+```ts
+export interface Session {
+  customerId: string;
+  companyId: string;          // was: string | null — now always populated post-login
+  companyLocationId: string;  // NEW — required for all Storefront API B2B calls
+  accessToken: string;        // NEW — Customer Account API token
+  email: string;
+}
+```
+
+**Updated `middleware.ts`:** unchanged in structure — still redirects `/account/*` and `/admin/*` to `/` if no session cookie. The cookie now carries more fields but middleware only checks its existence.
+
+**New env vars needed:**
+```bash
+SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID=   # From Shopify Partners > Customer Account API
+SHOPIFY_CUSTOMER_ACCOUNT_URL=         # e.g. https://shopify.com/{shop-id}
+```
+
+**Security note:** `codeVerifier` must only be stored in a `httpOnly; SameSite=Lax; Secure` cookie and deleted immediately after the callback. Never log or expose it.
+
+### Step 6b: Admin API — B2B Company & Catalog Setup *(parallel with Step 6)*
+
+> The Customer Account API handles buyer **authentication**. The Admin API handles the **setup** of the B2B structure those buyers authenticate into: companies, locations, catalogs, and payment terms. Without this setup, there are no companies for buyers to belong to and no catalogs to assign B2B pricing from.
+
+This step is a mix of one-time seeding scripts (run once per store setup) and admin-facing mutations (run when onboarding new wholesale accounts).
+
+**Admin API objects involved:**
+
+| Object | Purpose |
+|---|---|
+| `Company` | Represents a wholesale buyer organisation (e.g. "GymChain Ltd") |
+| `CompanyLocation` | A physical or billing location under a company — this is what gets the `companyLocationId` used in Step 6 |
+| `CompanyContact` | A person (customer) attached to a company, with a role (admin, buyer) |
+| `Catalog` / `CompanyLocationCatalog` | A price list assigned to one or more company locations |
+| `PriceList` | Customer-specific prices and % adjustments per SKU |
+| `PaymentTerms` | Net-30, net-60, etc. attached to a company location |
+
+**Scripts location:** `scripts/shopify-b2b-seed.ts` (run with `npx ts-node`)
+
+**Mutations to implement in `lib/shopify/admin.ts`:**
+
+```graphql
+# 1. Create a company (one per wholesale account)
+mutation CompanyCreate($input: CompanyCreateInput!) {
+  companyCreate(input: $input) {
+    company { id name }
+    userErrors { field message }
+  }
+}
+
+# 2. Create a location under that company
+mutation CompanyLocationCreate($companyId: ID!, $input: CompanyLocationInput!) {
+  companyLocationCreate(companyId: $companyId, input: $input) {
+    companyLocation { id name }
+    userErrors { field message }
+  }
+}
+
+# 3. Assign a catalog (price list) to the company location
+mutation CompanyLocationCatalogAssign($companyLocationId: ID!, $catalogId: ID!) {
+  companyLocationAssignCatalogs(
+    companyLocationId: $companyLocationId
+    catalogIds: [$catalogId]
+  ) {
+    companyCatalogs { catalog { id title } }
+    userErrors { field message }
+  }
+}
+
+# 4. Set payment terms on the company location (net-30, net-60, etc.)
+mutation PaymentTermsCreate($referenceId: ID!, $paymentTermsAttributes: PaymentTermsInput!) {
+  paymentTermsCreate(
+    referenceId: $referenceId
+    paymentTermsAttributes: $paymentTermsAttributes
+  ) {
+    paymentTerms { id paymentTermsName dueInDays }
+    userErrors { field message }
+  }
+}
+
+# 5. Create a B2B catalog with a price list
+mutation CatalogCreate($input: CatalogCreateInput!) {
+  catalogCreate(input: $input) {
+    catalog { id title }
+    userErrors { field message }
+  }
+}
+```
+
+**Seeding flow for a new wholesale account:**
+```
+1. companyCreate         → get companyId
+2. companyLocationCreate → get companyLocationId (save to DB / share with buyer)
+3. catalogCreate         → create or reuse a price list catalog (e.g. "Tier 1 Wholesale")
+4. companyLocationCatalogAssign → link price list to this location
+5. paymentTermsCreate    → attach net-30 or net-60 to the location
+6. companyContactCreate  → attach customer email to the company with "buyer" role
+```
+
+**Where `companyLocationId` flows:**
+- Stored in buyer's session after login (Step 6)
+- Passed as `buyerIdentity.companyLocationId` on all Storefront API calls (Step 2)
+- This is what causes Shopify to return catalog prices, volume tiers, and payment terms
+
+**Admin queries for dashboard (`/admin/sync-status`, Phase 4):**
+```graphql
+# Fetch all companies and their locations
+query Companies($first: Int!) {
+  companies(first: $first) {
+    nodes {
+      id name
+      locations(first: 10) {
+        nodes {
+          id name
+          paymentTerms { paymentTermsName dueInDays }
+          catalogs(first: 5) { nodes { catalog { id title } } }
+        }
+      }
+    }
+  }
+}
+```
 
 ---
 
@@ -570,6 +812,10 @@ SHOPIFY_ADMIN_TOKEN=                # Admin API token (free with dev store)
 SHOPIFY_WEBHOOK_SECRET=             # HMAC verification
 SHOPIFY_LOCATION_ID=                # Primary inventory location
 
+# Shopify Customer Account API (B2B auth — Step 6)
+SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID= # From Shopify Partners dashboard > Customer Account API
+SHOPIFY_CUSTOMER_ACCOUNT_URL=       # e.g. https://shopify.com/{shop-id} (from same dashboard)
+
 # Sanity (free tier)
 SANITY_PROJECT_ID=
 SANITY_DATASET=production
@@ -607,7 +853,10 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 | AI can auto-add to cart with no limit | Confirmation required + spending cap + item limit |
 | No database — no persistent state | Prisma + Neon Postgres (free tier) |
 | No observability — silent failures | Pino logging + Sentry free tier + sync dashboard |
-| No B2B Shopify APIs used | Company, CompanyLocation, catalog APIs for pricing |
+| No B2B Shopify APIs used | Company, CompanyLocation, catalog APIs for pricing (Step 6b) |
+| No real B2B auth — `companyId` always `null` | Customer Account API PKCE OAuth → `companyLocationId` in session (Step 6) |
+| Storefront API returns DTC prices to all buyers | `buyerIdentity.companyLocationId` on every Storefront request (Step 2) |
+| Volume pricing tiers hardcoded in page.tsx | `quantityPriceBreaks` query field returns live catalog tiers (Step 2) |
 | OpenAI assumed (paid) | Groq free tier or Ollama local — $0 |
 
 ---
@@ -619,6 +868,12 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - [ ] View `/products/[handle]` — see Shopify data + Sanity content
 - [ ] Add to cart → cart page shows items
 - [ ] Checkout redirects to Shopify hosted checkout
+- [ ] Click "Log In" → redirected to Shopify Customer Account OAuth page (Step 6)
+- [ ] Complete login → session cookie set with `companyLocationId` populated
+- [ ] View `/products/[handle]` after login → volume pricing tiers are live from catalog (not hardcoded)
+- [ ] Add to cart after login → cart has `buyerIdentity.companyLocation` set
+- [ ] Checkout after login → lands in B2B checkout (payment terms visible, not standard DTC)
+- [ ] Run seeding script → company + location + catalog + payment terms exist in Shopify Admin (Step 6b)
 
 ### Phase 2 ✓
 - [ ] Place test order in Shopify → Sales Order appears in ERPNext

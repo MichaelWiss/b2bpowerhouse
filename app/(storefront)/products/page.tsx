@@ -12,9 +12,7 @@ const DEMO_PRODUCTS = [
     price: "1,240",
     moq: 4,
     available: true,
-    // Wide gym floor with power racks visible
-    image:
-      "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=1067&fit=crop&q=80",
+    image: "/products/powerrack.jpg",
   },
   {
     id: "2",
@@ -25,9 +23,7 @@ const DEMO_PRODUCTS = [
     price: "320",
     moq: 10,
     available: true,
-    // Barbell loaded with plates on a rack
-    image:
-      "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800&h=1067&fit=crop&q=80",
+    image: "/products/olympicbarbell.jpg",
   },
   {
     id: "3",
@@ -38,9 +34,7 @@ const DEMO_PRODUCTS = [
     price: "480",
     moq: 6,
     available: true,
-    // Free weights area — dumbbells on storage rack
-    image:
-      "https://images.unsplash.com/photo-1558611848-73f7eb4001a1?w=800&h=1067&fit=crop&q=80",
+    image: "/products/hex1.jpg",
   },
   {
     id: "4",
@@ -51,9 +45,7 @@ const DEMO_PRODUCTS = [
     price: "3,200",
     moq: 2,
     available: true,
-    // Cardio equipment — treadmill row
-    image:
-      "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&h=1067&fit=crop&q=80",
+    image: "/products/treadmill.jpg",
   },
   {
     id: "5",
@@ -64,9 +56,7 @@ const DEMO_PRODUCTS = [
     price: "1,080",
     moq: 3,
     available: false,
-    // Stationary exercise bike
-    image:
-      "https://images.unsplash.com/photo-1576678927484-cc907957088c?w=800&h=1067&fit=crop&q=80",
+    image: "/products/assaultbike.jpg",
   },
   {
     id: "6",
@@ -77,9 +67,7 @@ const DEMO_PRODUCTS = [
     price: "2,100",
     moq: 2,
     available: true,
-    // Rowing machine in gym setting
-    image:
-      "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=800&h=1067&fit=crop&q=80",
+    image: "/products/rowing.jpg",
   },
   {
     id: "7",
@@ -90,9 +78,7 @@ const DEMO_PRODUCTS = [
     price: "195",
     moq: 20,
     available: true,
-    // Functional training — battle rope / sled area
-    image:
-      "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=800&h=1067&fit=crop&q=80",
+    image: "/products/battlerope.jpg",
   },
   {
     id: "8",
@@ -103,9 +89,7 @@ const DEMO_PRODUCTS = [
     price: "2,860",
     moq: 1,
     available: true,
-    // Overhead pull-up / rig structure
-    image:
-      "https://images.unsplash.com/photo-1517344884509-a0c97ec11bcc?w=800&h=1067&fit=crop&q=80",
+    image: "/products/pulluprig.jpg",
   },
   {
     id: "9",
@@ -116,9 +100,7 @@ const DEMO_PRODUCTS = [
     price: "640",
     moq: 8,
     available: true,
-    // Kettlebells in use — clean and press
-    image:
-      "https://images.unsplash.com/photo-1604480132736-44c188fe4d20?w=800&h=1067&fit=crop&q=80",
+    image: "/products/kettlebellset.jpg",
   },
 ];
 
@@ -127,7 +109,6 @@ const DEMO_CATEGORIES = ["All", "Strength", "Cardio", "Functional", "Recovery"];
 export default function ProductsPage() {
   return (
     <main style={{ paddingTop: "64px" }}>
-
       {/* ─── Page header ─────────────────────────────────────────────────────── */}
       <div className="section" style={{ paddingBottom: 0 }}>
         <div className="container">
@@ -147,9 +128,9 @@ export default function ProductsPage() {
             Our Equipment
           </h1>
           <p className="rich-text" style={{ maxWidth: 480 }}>
-            Premium commercial gym equipment supplied direct to operators. Minimum
-            order quantities apply — contact us for bespoke project and installation
-            pricing.
+            Premium commercial gym equipment supplied direct to operators.
+            Minimum order quantities apply — contact us for bespoke project and
+            installation pricing.
           </p>
         </div>
       </div>
@@ -321,7 +302,6 @@ export default function ProductsPage() {
           </div>
         </div>
       </div>
-
     </main>
   );
 }
